@@ -87,14 +87,8 @@ class dataloader:
 				dataset = np.concatenate((dataset,temp),0)
 			
 			print(dataset.shape)
-			first_frame_index = first_frame_index+30
+			first_frame_index = first_frame_index+300
 		return dataset
-
-	# Get data for training or prediction
-	# Ouputs : [batch_size,nframe,in_w,in_h,3]
-	#TODO --> finish this method
-	def getData(self,in_w,in_h):
-		return self.getFrame(300)
 
 	# Show frame
 	def showFrame(self,frame_index):
