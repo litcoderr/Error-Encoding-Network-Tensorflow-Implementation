@@ -11,6 +11,8 @@ You are welcome to contribute
 import tensorflow as tf
 import numpy as np
 import argparse
+import os
+
 import dataloader
 
 # Training settings
@@ -35,5 +37,16 @@ arg = parser.parse_args()
 # Initialize dataloader
 dataloader = dataloader.dataloader(arg)
 videoInfo = dataloader.getVideoInfo()
-print('original width: {0[0]}\noriginal height: {0[1]}\nnumber_of_Frame: {0[2]}\nFPS: {0[3]}'.format(videoInfo))
-dataloader.gen_tfrecords()
+print('original width: {0[0]} original height: {0[1]} number_of_Frame: {0[2]} FPS: {0[3]}'.format(videoInfo))
+# if tfrecords doesn't exist make one
+if not(os.path.isfile(arg.tfrecordspath)):
+	dataloader.gen_tfrecords()
+else:
+	print('dataloader: {} exists'.format(arg.tfrecordspath))
+
+# Make tfrecord filename queue
+file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
+
+# Decode tfrecord file to usable numpy array
+x_train , y_train = dataloader.decode(file_name_queue)
+print(x_train,' ',y_train)

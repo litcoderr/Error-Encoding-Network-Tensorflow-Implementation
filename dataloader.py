@@ -60,7 +60,7 @@ class dataloader:
 
 		# Get Frame for training input
 		while j <= endof_x:
-			ret, frame = self.getFrame(j)
+			_, frame = self.getFrame(j)
 			frame = frame / 255 # preprocess image to range 0 and 1
 			if j==start_frame_index:
 				temp_x = frame
@@ -70,7 +70,7 @@ class dataloader:
 
 		#Get Frame for training output
 		while j <= endof_y:
-			ret, frame = self.getFrame(j)
+			_, frame = self.getFrame(j)
 			frame = frame / 255 # preprocess image to range 0 and 1
 			if j == endof_x+self.frame_interval:
 				temp_y = frame
@@ -86,7 +86,7 @@ class dataloader:
 
 	# Generate TFRecord file for training
 	def gen_tfrecords(self):
-		print('dataloader: Generating TFRecords file...')
+		print('dataloader: Generating TFRecords file-->{}'.format(self.arg.tfrecordspath))
 
 		filename = self.arg.tfrecordspath # tfrecords filename
 		writer = tf.python_io.TFRecordWriter(filename)
@@ -125,6 +125,23 @@ class dataloader:
 	# make int64 list to tf.train.Feature
 	def _int64_feature(self,value):
 		return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+	# decode tfrecords data and return numpy array data
+	def decode(self,file_name_queue):
+		reader = tf.TFRecordReader()
+		_, example = reader.read(file_name_queue) # Read Examples from file_name_queue
+		features = tf.parse_single_example(example,features={
+			'height_x' : tf.FixedLenFeature([], tf.int64),
+			'width_x' : tf.FixedLenFeature([], tf.int64),
+			'channel_x' : tf.FixedLenFeature([], tf.int64),
+			'raw_y' : tf.FixedLenFeature([], tf.string),
+			'height_y' : tf.FixedLenFeature([], tf.int64),
+			'width_y' : tf.FixedLenFeature([], tf.int64),
+			'channel_y' : tf.FixedLenFeature([], tf.int64),
+			'raw_y' : tf.FixedLenFeature([], tf.string)
+			})
+		# TODO Continue working on this function
+		return (0,1)
 
 	# Show frame
 	def showFrame(self,frame_index):
