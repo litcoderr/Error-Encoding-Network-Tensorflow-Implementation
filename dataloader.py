@@ -10,6 +10,7 @@ You are welcome to contribute
 '''
 
 import cv2
+import tensorflow as tf
 import numpy as np
 
 class dataloader:
@@ -49,48 +50,81 @@ class dataloader:
 			print('dataloader: please load data first')
 			return 0
 
-	def endof_y(self,first_frame_index):
-		return first_frame_index+self.frame_interval*(2*self.arg.pred_frame-1)
-
 	# Manufacture and return data to make a Trainable Dataset
-	def makeDataset(self):
-		dataset=np.array([]) # Empty dataset to be filled
-		first_frame_index = 0
-		while self.endof_y(first_frame_index) < self.nframe:
-			temp_x = np.array([])
-			temp_y = np.array([])
-			endof_x = first_frame_index+self.frame_interval*(self.arg.pred_frame-1)
-			endof_y = first_frame_index+self.frame_interval*(2*self.arg.pred_frame-1)
-			j = first_frame_index
+	def gen_Data(self,start_frame_index):
+		temp_x = np.array([])
+		temp_y = np.array([])
+		endof_x = start_frame_index+self.frame_interval*(self.arg.pred_frame-1)
+		endof_y = start_frame_index+self.frame_interval*(2*self.arg.pred_frame-1)
+		j = start_frame_index
 
-			# Get Frame for training input
-			while j <= endof_x:
-				ret, frame = self.getFrame(j)
-				if j==first_frame_index:
-					temp_x = frame
-				else:
-					temp_x = np.concatenate((temp_x,frame),2)
-				j = j+self.frame_interval
-
-			#Get Frame for training output
-			while j <= endof_y:
-				ret, frame = self.getFrame(j)
-				if j == endof_x+self.frame_interval:
-					temp_y = frame
-				else:
-					temp_y = np.concatenate((temp_y,frame),2)
-				j = j+self.frame_interval
-
-			temp = np.expand_dims(np.stack((temp_x,temp_y)),axis=0)
-			# Construct a full dataset
-			if first_frame_index == 0:
-				dataset = temp
+		# Get Frame for training input
+		while j <= endof_x:
+			ret, frame = self.getFrame(j)
+			frame = frame / 255 # preprocess image to range 0 and 1
+			if j==start_frame_index:
+				temp_x = frame
 			else:
-				dataset = np.concatenate((dataset,temp),0)
-			
-			print(dataset.shape)
-			first_frame_index = first_frame_index+300
-		return dataset
+				temp_x = np.concatenate((temp_x,frame),2)
+			j = j+self.frame_interval
+
+		#Get Frame for training output
+		while j <= endof_y:
+			ret, frame = self.getFrame(j)
+			frame = frame / 255 # preprocess image to range 0 and 1
+			if j == endof_x+self.frame_interval:
+				temp_y = frame
+			else:
+				temp_y = np.concatenate((temp_y,frame),2)
+			j = j+self.frame_interval
+		
+		return (temp_x,temp_y)
+
+	# End index of y(target) data
+	def endof_y(self,start_frame_index):
+		return start_frame_index+self.frame_interval*(2*self.arg.pred_frame-1)
+
+	# Generate TFRecord file for training
+	def gen_tfrecords(self):
+		print('dataloader: Generating TFRecords file...')
+
+		filename = self.arg.tfrecordspath # tfrecords filename
+		writer = tf.python_io.TFRecordWriter(filename)
+
+		index = 0 # starting frame index
+		while self.endof_y(index) < self.nframe:
+			temp_x , temp_y = self.gen_Data(index)
+
+			height_x,width_x,channel_x = temp_x.shape
+			height_y,width_y,channel_y = temp_y.shape
+
+			raw_x = temp_x.tostring()
+			raw_y = temp_y.tostring()
+
+			example = tf.train.Example(features=tf.train.Features(feature={
+				'height_x' : self._int64_feature(height_x),
+				'width_x' : self._int64_feature(width_x),
+				'channel_x' : self._int64_feature(channel_x),
+				'raw_x' : self._bytes_feature(raw_x),
+				'height_y' : self._int64_feature(height_y),
+				'width_y' : self._int64_feature(width_y),
+				'channel_y' : self._int64_feature(channel_y),
+				'raw_y' : self._bytes_feature(raw_y)
+				}))
+			# Write example to tfrecords file
+			writer.write(example.SerializeToString())
+
+			index = index + self.arg.frame_interval
+		# close writer when done using
+		writer.close()
+
+	# make byte list to tf.train.Feature
+	def _bytes_feature(self,value):
+		return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+	# make int64 list to tf.train.Feature
+	def _int64_feature(self,value):
+		return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 	# Show frame
 	def showFrame(self,frame_index):
