@@ -41,6 +41,8 @@ class dataloader:
 		if self.cap.isOpened():
 			self.cap.set(1,frame_index)
 			ret, frame = self.cap.read()
+			if self.original_height < self.original_width:
+				frame = np.transpose(frame,(1,0,2))
 			frame = cv2.resize(frame, (self.arg.width, self.arg.height))
 			return ret,frame
 		else:
