@@ -49,4 +49,25 @@ file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
 
 # Decode tfrecord file to usable numpy array
 x_train , y_train = dataloader.decode(file_name_queue)
-print(x_train,' ',y_train)
+
+# initializer
+init_op = tf.group(tf.global_variables_initializer(),
+					tf.local_variables_initializer())
+
+# Train
+with tf.Session() as sess:
+	sess.run(init_op)
+
+	coord = tf.train.Coordinator()
+	threads = tf.train.start_queue_runners(coord=coord)
+
+	X_train , Y_train = sess.run([x_train,y_train])
+	print(X_train.shape)
+	print(Y_train.shape)
+
+
+
+
+
+
+

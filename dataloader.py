@@ -20,6 +20,7 @@ class dataloader:
 
 		# Needed Variables
 		self.original_width,self.original_height,self.nframe,self.fps = self.getVideoInfo()
+		self.channel = 3 * self.arg.pred_frame
 		# Wanted frame interval based on wanted time_interval
 		self.frame_interval = int((self.arg.time_interval/10)*self.fps)
 		print('dataloader: done initializing')
@@ -134,14 +135,38 @@ class dataloader:
 			'height_x' : tf.FixedLenFeature([], tf.int64),
 			'width_x' : tf.FixedLenFeature([], tf.int64),
 			'channel_x' : tf.FixedLenFeature([], tf.int64),
-			'raw_y' : tf.FixedLenFeature([], tf.string),
+			'raw_x' : tf.FixedLenFeature([], tf.string),
 			'height_y' : tf.FixedLenFeature([], tf.int64),
 			'width_y' : tf.FixedLenFeature([], tf.int64),
 			'channel_y' : tf.FixedLenFeature([], tf.int64),
 			'raw_y' : tf.FixedLenFeature([], tf.string)
 			})
-		# TODO Continue working on this function
-		return (0,1)
+		# Extract Feature
+		X = tf.decode_raw(features['raw_x'],tf.float64)
+		Y = tf.decode_raw(features['raw_y'],tf.float64)
+		height_x = tf.cast(features['height_x'],tf.int32)
+		width_x = tf.cast(features['width_x'],tf.int32)
+		channel_x = tf.cast(features['channel_x'],tf.int32)
+		height_y = tf.cast(features['height_y'],tf.int32)
+		width_y = tf.cast(features['width_y'],tf.int32)
+		channel_y = tf.cast(features['channel_y'],tf.int32)
+
+		# Remake image
+		x_shape = tf.stack([height_x,width_x,channel_x])
+		y_shape = tf.stack([height_y,width_y,channel_y])
+		X = tf.reshape(X,x_shape)
+		Y = tf.reshape(Y,y_shape)
+		X.set_shape([self.arg.height,self.arg.width,self.channel])
+		Y.set_shape([self.arg.height,self.arg.width,self.channel])
+
+		# Generate shuffled batch data
+		X,Y = tf.train.shuffle_batch([X,Y],
+			batch_size = self.arg.batch_size,
+			capacity = 30,
+			num_threads=2,
+			min_after_dequeue=10)
+
+		return X,Y
 
 	# Show frame
 	def showFrame(self,frame_index):
