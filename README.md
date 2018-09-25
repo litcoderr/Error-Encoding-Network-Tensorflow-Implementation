@@ -23,7 +23,7 @@ Developed by James Youngchae Chee @ Dongsin Science Highschool.
 8. ``` -lrt ``` : learning rate (기본값: 0.0005)
 9. ``` -epoch ``` : epoch 수 (기본값: 500)
 ### Visualization
-<i>개발중
+<i>개발중</i>
 ## Usage - English
 ### Data
 ### Training
