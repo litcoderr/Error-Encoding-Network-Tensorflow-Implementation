@@ -7,6 +7,15 @@ This is a tensorflow implementation of EEN developed by Mikael Henaff, Junbo Zha
 Developed by James Youngchae Chee @ Dongsin Science Highschool.
 ![Diagram](img/een-crop.png)
 ## Usage - 한국어(Korean)
+#### Deterministic 모델 학습시키기
+```
+Terminal> python3 train_een_deterministic.py [옵션 설정]
+```
+#### Latent 적용된 모델 학습시키기
+<i>개발중</i>
+```
+Terminal> python3 train_een_latent.py [옵션 설정]
+```
 ### Data
 리포지토리를 클론 한 후 ```./data``` 디렉토리를 만들어 원하는 영상 파일을 넣는다.
 ### Training
