@@ -70,12 +70,14 @@ biases={
 	'bc6' : tf.Variable(tf.random_normal([dataloader.channel]))
 }
 
-# Variables
+# Operations
 init_global_op = tf.global_variables_initializer()
 init_local_op = tf.local_variables_initializer()
 
 model = models.BaselineModel3Layer(x_train,weights,biases)
 feed_op = model.feed()
+
+
 # Train
 with tf.Session() as sess:
 	sess.run(init_global_op)
