@@ -30,7 +30,6 @@ parser.add_argument('-batch_size', type=int, default=5, help='batch size')
 parser.add_argument('-nfeature', type=int, default=64, help='number of feature maps in convnet')
 parser.add_argument('-lrt', type=float, default=0.0005, help='learning rate')
 parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
-parser.add_argument('-loss', type=str, default='l2', help='l1 | l2')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
 parser.add_argument('-tfrecordspath', type=str, default='./data/dataset.tfrecords', help='tfrecords file path')
 parser.add_argument('-save_dir', type=str, default='./results/', help='where to save the models')
@@ -100,7 +99,7 @@ with tf.Session() as sess:
 	for epochs in range(arg.epoch):
 		sess.run(train_op)
 		print('epochs: {} loss: {}'.format(epochs,loss.eval()))
-		
+
 		## Show every 50 epoch
 		#pred = sess.run(feed_op)
 		#if epochs % 50 == 0:
