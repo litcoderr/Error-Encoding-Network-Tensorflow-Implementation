@@ -30,4 +30,4 @@ class BaselineModel3Layer:
 		self.X = self.conv2d_transpose(self.X,self.weights['wc4'],self.biases['bc4'],2)
 		self.X = self.conv2d_transpose(self.X,self.weights['wc5'],self.biases['bc5'],2)
 		self.X = self.conv2d_transpose(self.X,self.weights['wc6'],self.biases['bc6'],2)
-		return self.X
+		return tf.clip_by_value(self.X,-1,1) # Limit X range to generate valid image

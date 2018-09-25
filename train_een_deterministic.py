@@ -13,6 +13,7 @@ import numpy as np
 import argparse
 import os
 import skimage.io as io
+from matplotlib import pyplot as plt
 
 import dataloader
 import models
@@ -99,6 +100,13 @@ with tf.Session() as sess:
 	for epochs in range(arg.epoch):
 		sess.run(train_op)
 		print('epochs: {} loss: {}'.format(epochs,loss.eval()))
+		
+		## Show every 50 epoch
+		#pred = sess.run(feed_op)
+		#if epochs % 50 == 0:
+		#	for j in range(arg.pred_frame):
+		#		io.imshow(pred[0,:,:,j*3:(j+1)*3])
+		#		plt.show()
 
 	# stop coordinator and join threads
 	coord.request_stop()
