@@ -20,7 +20,6 @@ import models
 
 # Training settings
 parser = argparse.ArgumentParser()
-parser.add_argument('-model', type=str, default='baseline-3layer', help='type of model to use')
 parser.add_argument('-width', type=int, default=480, help='video width')
 parser.add_argument('-height', type=str, default=480, help='video height')
 parser.add_argument('-pred_frame', type=int, default=5, help='number of frames to learn and predict')
