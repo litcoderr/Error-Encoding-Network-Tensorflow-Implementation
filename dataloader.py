@@ -99,6 +99,9 @@ class dataloader:
 			height_x,width_x,channel_x = temp_x.shape
 			height_y,width_y,channel_y = temp_y.shape
 
+			temp_x = np.float32(temp_x)
+			temp_y = np.float32(temp_y)
+
 			raw_x = temp_x.tostring()
 			raw_y = temp_y.tostring()
 
@@ -142,8 +145,8 @@ class dataloader:
 			'raw_y' : tf.FixedLenFeature([], tf.string)
 			})
 		# Extract Feature
-		X = tf.decode_raw(features['raw_x'],tf.float64)
-		Y = tf.decode_raw(features['raw_y'],tf.float64)
+		X = tf.decode_raw(features['raw_x'],tf.float32)
+		Y = tf.decode_raw(features['raw_y'],tf.float32)
 		height_x = tf.cast(features['height_x'],tf.int32)
 		width_x = tf.cast(features['width_x'],tf.int32)
 		channel_x = tf.cast(features['channel_x'],tf.int32)

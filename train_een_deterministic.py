@@ -12,8 +12,10 @@ import tensorflow as tf
 import numpy as np
 import argparse
 import os
+import skimage.io as io
 
 import dataloader
+import models
 
 # Training settings
 parser = argparse.ArgumentParser()
@@ -22,8 +24,8 @@ parser.add_argument('-width', type=int, default=480, help='video width')
 parser.add_argument('-height', type=str, default=480, help='video height')
 parser.add_argument('-pred_frame', type=int, default=5, help='number of frames to learn and predict')
 parser.add_argument('-time_interval', type=int, default=2, help='time interval between frames in milliseconds')
-parser.add_argument('-frame_interval', type=int, default=300, help='frame interval when generating datasets')
-parser.add_argument('-batch_size', type=int, default=64, help='batch size')
+parser.add_argument('-frame_interval', type=int, default=150, help='frame interval when generating datasets')
+parser.add_argument('-batch_size', type=int, default=5, help='batch size')
 parser.add_argument('-nfeature', type=int, default=64, help='number of feature maps in convnet')
 parser.add_argument('-lrt', type=float, default=0.0005, help='learning rate')
 parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
@@ -50,20 +52,46 @@ file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
 # Decode tfrecord file to usable numpy array
 x_train , y_train = dataloader.decode(file_name_queue)
 
-# initializer
-init_op = tf.group(tf.global_variables_initializer(),
-					tf.local_variables_initializer())
+# Variables
+weights={
+	'wc1' : tf.Variable(tf.random_normal([7,7,dataloader.channel,arg.nfeature])),
+	'wc2' : tf.Variable(tf.random_normal([5,5,arg.nfeature,arg.nfeature])),
+	'wc3' : tf.Variable(tf.random_normal([5,5,arg.nfeature,arg.nfeature])),
+	'wc4' : tf.Variable(tf.random_normal([4,4,arg.nfeature,arg.nfeature])),
+	'wc5' : tf.Variable(tf.random_normal([4,4,arg.nfeature,arg.nfeature])),
+	'wc6' : tf.Variable(tf.random_normal([4,4,dataloader.channel,arg.nfeature]))
+}
+biases={
+	'bc1' : tf.Variable(tf.random_normal([arg.nfeature])),
+	'bc2' : tf.Variable(tf.random_normal([arg.nfeature])),
+	'bc3' : tf.Variable(tf.random_normal([arg.nfeature])),
+	'bc4' : tf.Variable(tf.random_normal([arg.nfeature])),
+	'bc5' : tf.Variable(tf.random_normal([arg.nfeature])),
+	'bc6' : tf.Variable(tf.random_normal([dataloader.channel]))
+}
 
+# Variables
+init_global_op = tf.global_variables_initializer()
+init_local_op = tf.local_variables_initializer()
+
+model = models.BaselineModel3Layer(x_train,weights,biases)
+feed_op = model.feed()
 # Train
 with tf.Session() as sess:
-	sess.run(init_op)
+	sess.run(init_global_op)
+	sess.run(init_local_op)
 
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(coord=coord)
 
-	X_train , Y_train = sess.run([x_train,y_train])
-	print(X_train.shape)
-	print(Y_train.shape)
+	#Test
+	result = sess.run(feed_op)
+
+	print(result.shape)
+
+	# stop coordinator and join threads
+	coord.request_stop()
+	coord.join(threads)
 
 
 
