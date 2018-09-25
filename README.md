@@ -16,13 +16,14 @@ Terminal> python3 train_een_deterministic.py [옵션 설정]
 ```
 Terminal> python3 train_een_latent.py [옵션 설정]
 ```
-### Data
+### 1. Data
 리포지토리를 클론 한 후 ```./data``` 디렉토리를 만들어 원하는 영상 파일을 넣는다.
-### Training
+### 2. Training
 #### 반드시 설정할 옵션
 1. ``` -videopath ``` : 비디오가 저장된 디렉토리
 2. ``` -tfrecordspath ``` : tfrecords 파일의 디렉토리 (존재하지 않는다면 설정한 디렉토리로 자동 생성됨)
 3. ``` -save_dir ``` : 학습한 모델을 저장할 디렉토리
+
 #### 이외의 옵션들
 1. ``` -width ``` : 학습할 때 사용할 프레임의 너비(픽셀단위) (기본값: 480)
 2. ``` -height ``` : 학습할 때 사용할 프레임의 높이(픽셀단위) (기본값: 480)
@@ -33,7 +34,8 @@ Terminal> python3 train_een_latent.py [옵션 설정]
 7. ``` -nfeature ``` : Conv net 구조에서의 feature 수 (기본값: 64)
 8. ``` -lrt ``` : learning rate (기본값: 0.0005)
 9. ``` -epoch ``` : epoch 수 (기본값: 500)
-### Visualization
+
+### 3. Visualization
 <i>개발중</i>
 ## Usage - English
 ### Data
