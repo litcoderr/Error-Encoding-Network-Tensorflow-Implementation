@@ -54,31 +54,40 @@ x_train , y_train = dataloader.decode(file_name_queue)
 
 # Variables
 weights={
-	'wc1' : tf.Variable(tf.random_normal([7,7,dataloader.channel,arg.nfeature])),
-	'wc2' : tf.Variable(tf.random_normal([5,5,arg.nfeature,arg.nfeature])),
-	'wc3' : tf.Variable(tf.random_normal([5,5,arg.nfeature,arg.nfeature])),
-	'wc4' : tf.Variable(tf.random_normal([4,4,arg.nfeature,arg.nfeature])),
-	'wc5' : tf.Variable(tf.random_normal([4,4,arg.nfeature,arg.nfeature])),
-	'wc6' : tf.Variable(tf.random_normal([4,4,dataloader.channel,arg.nfeature]))
+	'wc1' : tf.get_variable("W1", shape=[7,7,dataloader.channel,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc2' : tf.get_variable("W2", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc3' : tf.get_variable("W3", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc4' : tf.get_variable("W4", shape=[4,4,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc5' : tf.get_variable("W5", shape=[4,4,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc6' : tf.get_variable("W6", shape=[4,4,dataloader.channel,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer())
 }
 biases={
-	'bc1' : tf.Variable(tf.random_normal([arg.nfeature])),
-	'bc2' : tf.Variable(tf.random_normal([arg.nfeature])),
-	'bc3' : tf.Variable(tf.random_normal([arg.nfeature])),
-	'bc4' : tf.Variable(tf.random_normal([arg.nfeature])),
-	'bc5' : tf.Variable(tf.random_normal([arg.nfeature])),
-	'bc6' : tf.Variable(tf.random_normal([dataloader.channel]))
+	'bc1' : tf.get_variable("B1", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc2' : tf.get_variable("B2", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc3' : tf.get_variable("B3", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc4' : tf.get_variable("B4", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc5' : tf.get_variable("B5", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc6' : tf.get_variable("B6", shape=[dataloader.channel],initializer=tf.contrib.layers.xavier_initializer())
 }
 
+# Define Model
+model = models.BaselineModel3Layer(x_train,weights,biases)
+
 # Operations
+feed_op = model.feed()
+## Define MSE Loss
+loss = tf.losses.mean_squared_error(
+	labels=y_train,
+	predictions=feed_op
+)
+## Define Train Operation
+train_op = tf.train.AdamOptimizer(arg.lrt).minimize(loss)
+
+# Initialization
 init_global_op = tf.global_variables_initializer()
 init_local_op = tf.local_variables_initializer()
 
-model = models.BaselineModel3Layer(x_train,weights,biases)
-feed_op = model.feed()
-
-
-# Train
+# Start Session
 with tf.Session() as sess:
 	sess.run(init_global_op)
 	sess.run(init_local_op)
@@ -86,10 +95,10 @@ with tf.Session() as sess:
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(coord=coord)
 
-	#Test
-	result = sess.run(feed_op)
-
-	print(result.shape)
+	# Strat Training
+	for epochs in range(arg.epoch):
+		sess.run(train_op)
+		print('epochs: {} loss: {}'.format(epochs,loss.eval()))
 
 	# stop coordinator and join threads
 	coord.request_stop()
