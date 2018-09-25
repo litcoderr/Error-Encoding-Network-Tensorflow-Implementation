@@ -3,7 +3,7 @@ This is a tensorflow implementation of EEN developed by Mikael Henaff, Junbo Zha
 <br>
 <br>
 Developed by James Youngchae Chee @ Dongsin Science Highschool.
-
+![Diagram](img/een-crop.png)
 ## Usage - 한국어
 ### Data
 리포지토리를 클론 한 후 ```./data``` 디렉토리를 만들어 원하는 영상 파일을 넣는다.
