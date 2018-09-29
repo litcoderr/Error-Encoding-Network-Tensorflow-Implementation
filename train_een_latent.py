@@ -31,7 +31,7 @@ parser.add_argument('-lrt', type=float, default=0.0005, help='learning rate')
 parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
 parser.add_argument('-tfrecordspath', type=str, default='./data/dataset.tfrecords', help='tfrecords file path')
-parser.add_argument('-modelpath', type=str, default='./model/deterministic/deterministic_model-10.meta', help='deterministic model path')
+parser.add_argument('-model_path', type=str, default='./model/deterministic/deterministic_model-10.meta', help='deterministic model path')
 parser.add_argument('-save_dir', type=str, default='./results/', help='where to save the models')
 arg = parser.parse_args()
 
@@ -53,7 +53,7 @@ file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
 x_train , y_train = dataloader.decode(file_name_queue)
 
 with tf.Session() as sess:
-	saver = tf.train.import_meta_graph(arg.modelpath)
+	saver = tf.train.import_meta_graph(arg.model_path)
 	saver.restore(sess,tf.train.latest_checkpoint('./model/deterministic/'))
 	graph = tf.get_default_graph()
 	wc1 = graph.get_tensor_by_name('W1:0')
