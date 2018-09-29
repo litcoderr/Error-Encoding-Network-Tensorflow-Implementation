@@ -22,9 +22,9 @@ Terminal> python3 train_een_latent.py [옵션 설정]
 #### 반드시 설정할 옵션
 1. ``` -videopath ``` : 비디오가 저장된 디렉토리
 2. ``` -tfrecordspath ``` : tfrecords 파일의 디렉토리 (존재하지 않는다면 설정한 디렉토리로 자동 생성됨)
-3-1. ```-model_name``` (only deterministic 모델) : 학습한 모델을 저장할 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model')
-3-2. ```-model_path``` (only latent 모델) : deterministic 모델을 불러올 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model-19.meta')
-4. ``` -save_dir ``` : 학습한 모델을 저장할 디렉토리
+3. ```-model_name``` (only deterministic 모델) : 학습한 모델을 저장할 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model')
+4. ```-model_path``` (only latent 모델) : deterministic 모델을 불러올 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model-19.meta')
+5. ``` -save_dir ``` : 학습한 모델을 저장할 디렉토리
 
 #### 이외의 옵션들
 1. ``` -width ``` : 학습할 때 사용할 프레임의 너비(픽셀단위) (기본값: 480)
