@@ -31,6 +31,7 @@ parser.add_argument('-lrt', type=float, default=0.0005, help='learning rate')
 parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
 parser.add_argument('-tfrecordspath', type=str, default='./data/dataset.tfrecords', help='tfrecords file path')
+parser.add_argument('-model_name', type=str, default='./model/deterministic/deterministic_model', help='deterministic model path')
 parser.add_argument('-save_dir', type=str, default='./results/', help='where to save the models')
 arg = parser.parse_args()
 
@@ -91,6 +92,9 @@ with tf.Session() as sess:
 	sess.run(init_global_op)
 	sess.run(init_local_op)
 
+	# Saver Object to save all the variables
+	saver = tf.train.Saver()
+
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(coord=coord)
 
@@ -99,12 +103,9 @@ with tf.Session() as sess:
 		sess.run(train_op)
 		print('epochs: {} loss: {}'.format(epochs,loss.eval()))
 
-		## Show every 50 epoch
-		#pred = sess.run(feed_op)
-		#if epochs % 50 == 0:
-		#	for j in range(arg.pred_frame):
-		#		io.imshow(pred[0,:,:,j*3:(j+1)*3])
-		#		plt.show()
+		## Save weight every 10 epochs
+		if epochs % 10 == 0:
+			saver.save(sess,arg.model_name,global_step=epochs)
 
 	# stop coordinator and join threads
 	coord.request_stop()
