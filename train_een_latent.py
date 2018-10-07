@@ -52,15 +52,67 @@ file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
 # Decode tfrecord file to usable numpy array
 x_train , y_train = dataloader.decode(file_name_queue)
 
+
+X = tf.placeholder(tf.float32, shape=(arg.batch_size,arg.height,arg.width,dataloader.channel))
+Y = tf.placeholder(tf.float32, shape=(arg.batch_size,arg.height,arg.width,dataloader.channel))
+
+# Empty dictionary to store weights
+g_weights = {}
+g_biases = {}
+f_weights = {}
+f_biases = {}
+# Phi Network parameters
+## W stands for Weight ;; B stands for Bias ;; P stands for Phi
+phi_wc={
+	'wc1' : tf.get_variable("WP1", shape=[7,7,dataloader.channel,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc2' : tf.get_variable("WP2", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc3' : tf.get_variable("WP3", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc4' : tf.get_variable("WP4", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer())
+}
+phi_bc={
+	'bc1' : tf.get_variable("BP1", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc2' : tf.get_variable("BP2", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc3' : tf.get_variable("BP3", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc4' : tf.get_variable("BP4", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer())
+}
+
+# Operations
+# Initialization
+init_global_op = tf.global_variables_initializer()
+init_local_op = tf.local_variables_initializer()
+
+
 with tf.Session() as sess:
+	sess.run(init_global_op)
+	sess.run(init_local_op)
+
 	saver = tf.train.import_meta_graph(arg.model_path)
 	saver.restore(sess,tf.train.latest_checkpoint('./model/deterministic/'))
 	graph = tf.get_default_graph()
-	wc1 = graph.get_tensor_by_name('W1:0')
-	print(wc1.eval())
 
+	# Load pre-trained deterministic model's weights and biases
+	for i in range(1,7):
+		g_weights['wc{}'.format(i)] = graph.get_tensor_by_name('W{}:0'.format(i))
+		f_weights['wc{}'.format(i)] = graph.get_tensor_by_name('W{}:0'.format(i))
+		g_biases['bc{}'.format(i)] = graph.get_tensor_by_name('B{}:0'.format(i))
+		f_biases['bc{}'.format(i)] = graph.get_tensor_by_name('B{}:0'.format(i))
 
+	## Train
+	# Define model
+	model = models.LatentResidualModel3Layer(X,Y,g_weights,f_weights,g_biases,f_biases,phi_wc,phi_bc)
 
-
-
+	# Start Coordinator to feed in data from batch shuffler
+	coord = tf.train.Coordinator()
+	threads = tf.train.start_queue_runners(coord=coord)
+	
+	for epochs in range(arg.epoch):
+		print('epochs : {}'.format(epochs))
+		# feed-dict in data to X : placeholder and Y : placeholder
+		x_data = sess.run(x_train)
+		y_data = sess.run(y_train)
+		g_result = sess.run(model.g_network(),feed_dict={X:x_data,Y:y_data})
+		print(g_result.shape)
+	# stop coordinator and join threads
+	coord.request_stop()
+	coord.join(threads)
 
