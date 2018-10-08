@@ -53,7 +53,7 @@ Terminal> python3 train_een_latent.py [옵션 설정]
 ### 3. Visualization
 <i>개발중</i>
 ## Usage - English
-#### Required Directory
+#### Required Directory Structure
 
 	Project Directory
 	    ├ models.py
