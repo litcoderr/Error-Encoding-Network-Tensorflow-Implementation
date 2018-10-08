@@ -33,7 +33,7 @@ parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
 parser.add_argument('-tfrecordspath', type=str, default='./data/dataset.tfrecords', help='tfrecords file path')
 parser.add_argument('-model_path', type=str, default='./model/deterministic/deterministic_model-20.meta', help='deterministic model path')
-parser.add_argument('-save_dir', type=str, default='./results/', help='where to save the models')
+parser.add_argument('-save_dir', type=str, default='./results/', help='where models are saved')
 arg = parser.parse_args()
 
 ### Setup Training Environment ###

@@ -36,7 +36,7 @@ Terminal> python3 train_een_latent.py [옵션 설정]
 2. ``` -tfrecordspath ``` : tfrecords 파일의 디렉토리 (존재하지 않는다면 설정한 디렉토리로 자동 생성됨)
 3. ```-model_name``` (only deterministic 모델) : 학습한 모델을 저장할 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model')
 4. ```-model_path``` (only latent 모델) : deterministic 모델을 불러올 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model-19.meta')
-5. ``` -save_dir ``` : 학습한 모델을 저장할 디렉토리
+5. ``` -save_dir ``` : 학습한 모델을 저장할 디렉토리 (기본값: './results/')
 
 #### 이외의 옵션들
 1. ``` -width ``` : 학습할 때 사용할 프레임의 너비(픽셀단위) (기본값: 480)
@@ -53,6 +53,48 @@ Terminal> python3 train_een_latent.py [옵션 설정]
 ### 3. Visualization
 <i>개발중</i>
 ## Usage - English
-### Data
-### Training
-### Visualization
+#### Required Directory
+
+	Project Directory
+	    ├ models.py
+	    ├ dataloader.py
+	    ├ train_een_deterministic.py
+	    ├ train_een_latent.py
+	    ├── data (need to be created --> where videos and tfrecord are stored)
+	    │   ├── flower.mp4 (Need to add at least one video to train)
+	    │	├── dataset.tfrecords (auto created if not exist)
+	    │   └── ...
+	    └── model (need to be created --> where trained deterministic models are stored)
+
+### 1. Data
+Clone this repository and make ```./data``` directory. Add video you want to train.
+### 2. Training
+#### Training Deterministic Model
+```
+Terminal> python3 train_een_deterministic.py [initialize options]
+```
+#### Training Latent Residual Model
+```
+Terminal> python3 train_een_latent.py [initialize options]
+```
+#### Crucial Options to Check
+1. ``` -videopath ``` : directory of training video
+2. ``` -tfrecordspath ``` : tfrecords file directory (auto created if not exist)
+3. ```-model_name``` (only deterministic model) : deterministic model path (default: './model/deterministic/deterministic_model')
+4. ```-model_path``` (only latent model) : latent model path (default: './model/deterministic/deterministic_model-19.meta')
+5. ``` -save_dir ``` : where models are saved (default: './results/')
+
+#### More options to go through
+1. ``` -width ``` : wanted width for training(pixel) (default: 480)
+2. ``` -height ``` : wanted height for training(pixel) (default: 480)
+3. ``` -pred_frame ``` : number of frames to learn and predict (default: 5)
+4. ``` -time_interval ``` : time interval between frames in milliseconds (default: 2)
+5. ``` -data_interval ``` : number of frame interval between start of each dataset (default: 150)
+6. ``` -batch_size ``` : batch size (default: 5)
+7. ``` -nfeature ``` : number of feature maps in convnet (default: 64)
+8. ``` -nlatent ``` : Number of Latent Variables (default: 4) ** train_een_latent.py ONLY**
+9. ``` -lrt ``` : learning rate (default: 0.0005)
+10. ``` -epoch ``` : number of training epoch (default: 500)
+
+### 3. Visualization
+<i>In Development</i>
