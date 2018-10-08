@@ -24,9 +24,10 @@ parser.add_argument('-width', type=int, default=480, help='video width')
 parser.add_argument('-height', type=str, default=480, help='video height')
 parser.add_argument('-pred_frame', type=int, default=5, help='number of frames to learn and predict')
 parser.add_argument('-time_interval', type=int, default=2, help='time interval between frames in milliseconds')
-parser.add_argument('-frame_interval', type=int, default=150, help='frame interval when generating datasets')
+parser.add_argument('-data_interval', type=int, default=150, help='number of frame interval between start of each dataset')
 parser.add_argument('-batch_size', type=int, default=5, help='batch size')
 parser.add_argument('-nfeature', type=int, default=64, help='number of feature maps in convnet')
+parser.add_argument('-nlatent', type=int, default=4, help='Number of Latent Variables')
 parser.add_argument('-lrt', type=float, default=0.0005, help='learning rate')
 parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
@@ -52,35 +53,41 @@ file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
 # Decode tfrecord file to usable numpy array
 x_train , y_train = dataloader.decode(file_name_queue)
 
-
-X = tf.placeholder(tf.float32, shape=(arg.batch_size,arg.height,arg.width,dataloader.channel))
-Y = tf.placeholder(tf.float32, shape=(arg.batch_size,arg.height,arg.width,dataloader.channel))
-
+#X = tf.placeholder(tf.float32, shape=(arg.batch_size,arg.height,arg.width,dataloader.channel))
+#Y = tf.placeholder(tf.float32, shape=(arg.batch_size,arg.height,arg.width,dataloader.channel))
 # Empty dictionary to store weights
 g_weights = {}
 g_biases = {}
 f_weights = {}
 f_biases = {}
+trainable = []
 # Phi Network parameters
 ## W stands for Weight ;; B stands for Bias ;; P stands for Phi
-phi_wc={
-	'wc1' : tf.get_variable("WP1", shape=[7,7,dataloader.channel,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
-	'wc2' : tf.get_variable("WP2", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
-	'wc3' : tf.get_variable("WP3", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
-	'wc4' : tf.get_variable("WP4", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer())
+fc_size = 30*30*64
+phi_weights={
+	'wc1' : tf.get_variable("WCP1", shape=[7,7,dataloader.channel,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc2' : tf.get_variable("WCP2", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc3' : tf.get_variable("WCP3", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wc4' : tf.get_variable("WCP4", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'wf1' : tf.get_variable("WFP1", shape=[fc_size,100],initializer=tf.contrib.layers.xavier_initializer()),
+	'wf2' : tf.get_variable("WFP2", shape=[100,100],initializer=tf.contrib.layers.xavier_initializer()),
+	'wf3' : tf.get_variable("WFP3", shape=[100,arg.nlatent],initializer=tf.contrib.layers.xavier_initializer()),
+	'wf4' : tf.get_variable("WFP4", shape=[arg.nlatent,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer())
 }
-phi_bc={
-	'bc1' : tf.get_variable("BP1", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
-	'bc2' : tf.get_variable("BP2", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
-	'bc3' : tf.get_variable("BP3", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
-	'bc4' : tf.get_variable("BP4", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer())
+phi_biases={
+	'bc1' : tf.get_variable("BCP1", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc2' : tf.get_variable("BCP2", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc3' : tf.get_variable("BCP3", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bc4' : tf.get_variable("BCP4", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
+	'bf1' : tf.get_variable("BFP1", shape=[100],initializer=tf.contrib.layers.xavier_initializer()),
+	'bf2' : tf.get_variable("BFP2", shape=[100],initializer=tf.contrib.layers.xavier_initializer()),
+	'bf3' : tf.get_variable("BFP3", shape=[arg.nlatent],initializer=tf.contrib.layers.xavier_initializer())
 }
 
 # Operations
 # Initialization
 init_global_op = tf.global_variables_initializer()
 init_local_op = tf.local_variables_initializer()
-
 
 with tf.Session() as sess:
 	sess.run(init_global_op)
@@ -92,26 +99,47 @@ with tf.Session() as sess:
 
 	# Load pre-trained deterministic model's weights and biases
 	for i in range(1,7):
-		g_weights['wc{}'.format(i)] = graph.get_tensor_by_name('W{}:0'.format(i))
-		f_weights['wc{}'.format(i)] = graph.get_tensor_by_name('W{}:0'.format(i))
-		g_biases['bc{}'.format(i)] = graph.get_tensor_by_name('B{}:0'.format(i))
-		f_biases['bc{}'.format(i)] = graph.get_tensor_by_name('B{}:0'.format(i))
+		g_weights['wc{}'.format(i)] = sess.run(graph.get_tensor_by_name('W{}:0'.format(i)))
+		f_weights['wc{}'.format(i)] = sess.run(graph.get_tensor_by_name('W{}:0'.format(i)))
+		g_biases['bc{}'.format(i)] = sess.run(graph.get_tensor_by_name('B{}:0'.format(i)))
+		f_biases['bc{}'.format(i)] = sess.run(graph.get_tensor_by_name('B{}:0'.format(i)))
 
-	## Train
-	# Define model
-	model = models.LatentResidualModel3Layer(X,Y,g_weights,f_weights,g_biases,f_biases,phi_wc,phi_bc)
+for i in range(1,7):
+	g_weights['wc{}'.format(i)] = tf.Variable(g_weights['wc{}'.format(i)],name='WG{}'.format(i))
+	f_weights['wc{}'.format(i)] = tf.Variable(f_weights['wc{}'.format(i)],name='WF{}'.format(i))
+	g_biases['bc{}'.format(i)] = tf.Variable(g_biases['bc{}'.format(i)],name='BG{}'.format(i))
+	f_biases['bc{}'.format(i)] = tf.Variable(f_biases['bc{}'.format(i)],name='BF{}'.format(i))
+
+# List of weights to train
+trainable = trainable + list(f_weights.values())
+trainable = trainable + list(f_biases.values())
+trainable = trainable + list(phi_weights.values())
+trainable = trainable + list(phi_biases.values())
+
+model = models.LatentResidualModel3Layer(x_train,y_train,g_weights,f_weights,g_biases,f_biases,phi_weights,phi_biases)
+feed_op = model.train()
+loss_op = tf.losses.mean_squared_error(labels=y_train,predictions=feed_op[1])
+optimize_op = tf.train.AdamOptimizer(arg.lrt).minimize(loss_op,var_list=trainable)
+
+with tf.Session() as sess:
+	sess.run(tf.global_variables_initializer())
+	sess.run(tf.local_variables_initializer())
 
 	# Start Coordinator to feed in data from batch shuffler
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(coord=coord)
-	
+
 	for epochs in range(arg.epoch):
-		print('epochs : {}'.format(epochs))
+		print('epochs : {}'.format(epochs),end=' || ')
 		# feed-dict in data to X : placeholder and Y : placeholder
 		x_data = sess.run(x_train)
 		y_data = sess.run(y_train)
-		g_result = sess.run(model.g_network(),feed_dict={X:x_data,Y:y_data})
-		print(g_result.shape)
+		# 1. Compute g_result and f_result
+		g_result, f_result, z = sess.run(feed_op)
+		print('g_shape:{} f_shape:{} z_shape:{}'.format(g_result.shape,f_result.shape,z.shape),end=' || ')
+		loss = sess.run(loss_op)
+		sess.run(optimize_op)
+		print('loss:{}'.format(loss))
 	# stop coordinator and join threads
 	coord.request_stop()
 	coord.join(threads)

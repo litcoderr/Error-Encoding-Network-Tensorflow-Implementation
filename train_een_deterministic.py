@@ -24,7 +24,7 @@ parser.add_argument('-width', type=int, default=480, help='video width')
 parser.add_argument('-height', type=str, default=480, help='video height')
 parser.add_argument('-pred_frame', type=int, default=5, help='number of frames to learn and predict')
 parser.add_argument('-time_interval', type=int, default=2, help='time interval between frames in milliseconds')
-parser.add_argument('-frame_interval', type=int, default=150, help='frame interval when generating datasets')
+parser.add_argument('-data_interval', type=int, default=150, help='number of frame interval between start of each dataset')
 parser.add_argument('-batch_size', type=int, default=5, help='batch size')
 parser.add_argument('-nfeature', type=int, default=64, help='number of feature maps in convnet')
 parser.add_argument('-lrt', type=float, default=0.0005, help='learning rate')
@@ -73,14 +73,14 @@ biases={
 # Define Model
 model = models.BaselineModel3Layer(x_train,weights,biases)
 
-# Operations
+## Operations
 feed_op = model.feed()
-## Define MSE Loss
+# Define MSE Loss
 loss = tf.losses.mean_squared_error(
 	labels=y_train,
 	predictions=feed_op
 )
-## Define Train Operation
+# Define Train Operation
 train_op = tf.train.AdamOptimizer(arg.lrt).minimize(loss)
 
 # Initialization
@@ -89,12 +89,14 @@ init_local_op = tf.local_variables_initializer()
 
 # Start Session
 with tf.Session() as sess:
+	# Initialize Variables
 	sess.run(init_global_op)
 	sess.run(init_local_op)
 
 	# Saver Object to save all the variables
 	saver = tf.train.Saver()
 
+	# Start Coordinator and thread to feed in data
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(coord=coord)
 

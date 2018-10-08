@@ -18,19 +18,22 @@ class dataloader:
 		self.arg = arg
 		self.loadData()
 
-		# Needed Variables
+		# original width and height(Not used in operation --> converted to different size)
+		# nframe : Number of frames
+		# fps: Frames per Seconds
 		self.original_width,self.original_height,self.nframe,self.fps = self.getVideoInfo()
+		# Number of Channel for each dataset
 		self.channel = 3 * self.arg.pred_frame
-		# Wanted frame interval based on wanted time_interval
+		# Number of frames between each frame in a dataset
 		self.frame_interval = int((self.arg.time_interval/10)*self.fps)
 		print('dataloader: done initializing')
 
-	# Loading Data from arg.videopath
+	# Loading Data from arg.videopath --> Video File Path
 	def loadData(self):
 		self.cap = cv2.VideoCapture(self.arg.videopath)
 		print('dataloader: video loaded')
 
-	# Get Video Data
+	# Get Video Meta Data (Basic Information)
 	def getVideoInfo(self):
 		width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 		height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -38,50 +41,72 @@ class dataloader:
 		nframe = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
 		return (width,height,nframe,fps)
 
-	# Get frame of index in numpy array
+	# Returns one frame's numpy array based on "frame_index"
 	def getFrame(self,frame_index):
+		# If video data is opened(loaded)
 		if self.cap.isOpened():
+			# Read Frame
 			self.cap.set(1,frame_index)
 			ret, frame = self.cap.read()
+			# If video is not correctly oriented transpose to right shape
 			if self.original_height < self.original_width:
 				frame = np.transpose(frame,(1,0,2))
+			# Resize to wanted shape (which will be used in training)
+			# Want smaller size if computing power is lacking (Me...sad)
 			frame = cv2.resize(frame, (self.arg.width, self.arg.height))
 			return ret,frame
 		else:
+			# If Video is not loaded, load data first
 			print('dataloader: please load data first')
 			return 0
 
-	# Manufacture and return data to make a Trainable Dataset
+	# Returns One Data([height,width,num_channel])
+	# --> will be stored in one big dataset
 	def gen_Data(self,start_frame_index):
+		# Numpy array to store X data , Y data
 		temp_x = np.array([])
 		temp_y = np.array([])
+
+		# End index of X data , Y data
 		endof_x = start_frame_index+self.frame_interval*(self.arg.pred_frame-1)
 		endof_y = start_frame_index+self.frame_interval*(2*self.arg.pred_frame-1)
+		
+		# Index of each frame used to getFrame
 		j = start_frame_index
 
-		# Get Frame for training input
+		# Get Frame for training input (X data)
 		while j <= endof_x:
+			# Get Frame of index j
 			_, frame = self.getFrame(j)
-			frame = frame / 255 # preprocess image to range 0 and 1
+			# Preprocess image for it to range between 0 and 1
+			frame = frame / 255
+			# If start of a data --> append to empty temp_x
 			if j==start_frame_index:
 				temp_x = frame
+			# If not start of a data --> append to existing temp_x
 			else:
 				temp_x = np.concatenate((temp_x,frame),2)
+			# Update index of a frame based on calculated frame_interval
 			j = j+self.frame_interval
 
-		#Get Frame for training output
+		#Get Frame for training output (Y data)
 		while j <= endof_y:
+			# Get Frame of index j
 			_, frame = self.getFrame(j)
-			frame = frame / 255 # preprocess image to range 0 and 1
+			# Preprocess image for it to range between 0 and 1
+			frame = frame / 255
+			# If start of a data --> append to empty temp_y
 			if j == endof_x+self.frame_interval:
 				temp_y = frame
+			# If not start of a data --> append to existing temp_y
 			else:
 				temp_y = np.concatenate((temp_y,frame),2)
+			# Update index of a frame based on calculated frame_interval
 			j = j+self.frame_interval
-		
+		# Return X data and Y data
 		return (temp_x,temp_y)
 
-	# End index of y(target) data
+	# Returns end of y data (target) index
 	def endof_y(self,start_frame_index):
 		return start_frame_index+self.frame_interval*(2*self.arg.pred_frame-1)
 
@@ -89,9 +114,11 @@ class dataloader:
 	def gen_tfrecords(self):
 		print('dataloader: Generating TFRecords file-->{}'.format(self.arg.tfrecordspath))
 
-		filename = self.arg.tfrecordspath # tfrecords filename
+		# Create tfrecord writer with destination file name
+		filename = self.arg.tfrecordspath
 		writer = tf.python_io.TFRecordWriter(filename)
 
+		
 		index = 0 # starting frame index
 		while self.endof_y(index) < self.nframe:
 			temp_x , temp_y = self.gen_Data(index)
@@ -118,7 +145,7 @@ class dataloader:
 			# Write example to tfrecords file
 			writer.write(example.SerializeToString())
 
-			index = index + self.arg.frame_interval
+			index = index + self.arg.data_interval
 		# close writer when done using
 		writer.close()
 
