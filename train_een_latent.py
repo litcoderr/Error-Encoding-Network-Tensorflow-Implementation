@@ -117,7 +117,7 @@ trainable = trainable + list(phi_weights.values())
 trainable = trainable + list(phi_biases.values())
 
 model = models.LatentResidualModel3Layer(x_train,y_train,g_weights,f_weights,g_biases,f_biases,phi_weights,phi_biases)
-feed_op = model.train()
+feed_op = model.feed()
 loss_op = tf.losses.mean_squared_error(labels=y_train,predictions=feed_op[1])
 optimize_op = tf.train.AdamOptimizer(arg.lrt).minimize(loss_op,var_list=trainable)
 
