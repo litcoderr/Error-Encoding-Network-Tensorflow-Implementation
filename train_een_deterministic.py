@@ -40,19 +40,15 @@ arg = parser.parse_args()
 dataloader = dataloader.dataloader(arg)
 videoInfo = dataloader.getVideoInfo()
 print('original width: {0[0]} original height: {0[1]} number_of_Frame: {0[2]} FPS: {0[3]}'.format(videoInfo))
-# if tfrecords doesn't exist make one
+# if tfrecords doesn't exist --> make one
 if not(os.path.isfile(arg.tfrecordspath)):
 	dataloader.gen_tfrecords()
 else:
 	print('dataloader: {} exists'.format(arg.tfrecordspath))
 
-# Make tfrecord filename queue
-file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
+## Variables ##
 
-# Decode tfrecord file to usable numpy array
-x_train , y_train = dataloader.decode(file_name_queue)
-
-# Variables
+# Define weights and biases of Deterministic Model
 weights={
 	'wc1' : tf.get_variable("W1", shape=[7,7,dataloader.channel,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
 	'wc2' : tf.get_variable("W2", shape=[5,5,arg.nfeature,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
@@ -70,20 +66,24 @@ biases={
 	'bc6' : tf.get_variable("B6", shape=[dataloader.channel],initializer=tf.contrib.layers.xavier_initializer())
 }
 
-# Define Model
-model = models.BaselineModel3Layer(x_train,weights,biases)
+## Operations ##
 
-## Operations
+# Make tfrecord filename queue
+file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
+# Decode tfrecord file to usable numpy array
+x_train , y_train = dataloader.decode(file_name_queue)
+# Create Deterministic Model
+model = models.BaselineModel3Layer(x_train,weights,biases)
+# Feeding Operation
 feed_op = model.feed()
 # Define MSE Loss
 loss = tf.losses.mean_squared_error(
 	labels=y_train,
 	predictions=feed_op
 )
-# Define Train Operation
+# Train Operation
 train_op = tf.train.AdamOptimizer(arg.lrt).minimize(loss)
-
-# Initialization
+# Initialization Operation
 init_global_op = tf.global_variables_initializer()
 init_local_op = tf.local_variables_initializer()
 
@@ -102,9 +102,10 @@ with tf.Session() as sess:
 
 	# Strat Training
 	for epochs in range(arg.epoch):
+		# Run Training Operation
 		sess.run(train_op)
+		# Print Loss Operation
 		print('epochs: {} loss: {}'.format(epochs,loss.eval()))
-
 		## Save weight every 10 epochs
 		if epochs % 10 == 0:
 			saver.save(sess,arg.model_name,global_step=epochs)
@@ -112,10 +113,3 @@ with tf.Session() as sess:
 	# stop coordinator and join threads
 	coord.request_stop()
 	coord.join(threads)
-
-
-
-
-
-
-
