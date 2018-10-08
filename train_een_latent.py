@@ -139,9 +139,6 @@ with tf.Session() as sess:
 
 	for epochs in range(arg.epoch):
 		print('epochs : {}'.format(epochs),end=' || ')
-		# feed-dict in data to X : placeholder and Y : placeholder
-		x_data = sess.run(x_train)
-		y_data = sess.run(y_train)
 		# 1. Compute g_result and f_result
 		g_result, f_result, z = sess.run(feed_op)
 		# print G result shape and F result shape
