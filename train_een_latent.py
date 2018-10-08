@@ -47,22 +47,18 @@ if not(os.path.isfile(arg.tfrecordspath)):
 else:
 	print('dataloader: {} exists'.format(arg.tfrecordspath))
 
-# Make tfrecord filename queue
-file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
+## --------------- Variables ---------------- ##
 
-# Decode tfrecord file to usable numpy array
-x_train , y_train = dataloader.decode(file_name_queue)
-
-#X = tf.placeholder(tf.float32, shape=(arg.batch_size,arg.height,arg.width,dataloader.channel))
-#Y = tf.placeholder(tf.float32, shape=(arg.batch_size,arg.height,arg.width,dataloader.channel))
-# Empty dictionary to store weights
+# Empty dictionary to store pre-trained weights
 g_weights = {}
 g_biases = {}
 f_weights = {}
 f_biases = {}
+# List to store trainable weights
 trainable = []
+
 # Phi Network parameters
-## W stands for Weight ;; B stands for Bias ;; P stands for Phi
+# --> W stands for Weight ;; B stands for Bias ;; P stands for Phi
 fc_size = 30*30*64
 phi_weights={
 	'wc1' : tf.get_variable("WCP1", shape=[7,7,dataloader.channel,arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
@@ -84,26 +80,25 @@ phi_biases={
 	'bf3' : tf.get_variable("BFP3", shape=[arg.nlatent],initializer=tf.contrib.layers.xavier_initializer())
 }
 
-# Operations
-# Initialization
-init_global_op = tf.global_variables_initializer()
-init_local_op = tf.local_variables_initializer()
-
+# Session to Retrieve Pre-trained Variables
 with tf.Session() as sess:
-	sess.run(init_global_op)
-	sess.run(init_local_op)
+	# Initialize variables
+	sess.run(tf.global_variables_initializer())
+	sess.run(tf.local_variables_initializer())
 
+	# Create saver --> import meta graph (pre-trained graph)
 	saver = tf.train.import_meta_graph(arg.model_path)
+	# restore graph
 	saver.restore(sess,tf.train.latest_checkpoint('./model/deterministic/'))
 	graph = tf.get_default_graph()
 
-	# Load pre-trained deterministic model's weights and biases
+	# Load pre-trained weights and biases as numpy array
 	for i in range(1,7):
 		g_weights['wc{}'.format(i)] = sess.run(graph.get_tensor_by_name('W{}:0'.format(i)))
 		f_weights['wc{}'.format(i)] = sess.run(graph.get_tensor_by_name('W{}:0'.format(i)))
 		g_biases['bc{}'.format(i)] = sess.run(graph.get_tensor_by_name('B{}:0'.format(i)))
 		f_biases['bc{}'.format(i)] = sess.run(graph.get_tensor_by_name('B{}:0'.format(i)))
-
+# Convert numpy array to trainable tf.Variable
 for i in range(1,7):
 	g_weights['wc{}'.format(i)] = tf.Variable(g_weights['wc{}'.format(i)],name='WG{}'.format(i))
 	f_weights['wc{}'.format(i)] = tf.Variable(f_weights['wc{}'.format(i)],name='WF{}'.format(i))
@@ -116,12 +111,25 @@ trainable = trainable + list(f_biases.values())
 trainable = trainable + list(phi_weights.values())
 trainable = trainable + list(phi_biases.values())
 
+## --------------- Operations ---------------- ##
+
+# Make tfrecord filename queue
+file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
+# Decode tfrecord file to usable numpy array
+x_train , y_train = dataloader.decode(file_name_queue)
+# Create Latent Implemented Model
 model = models.LatentResidualModel3Layer(x_train,y_train,g_weights,f_weights,g_biases,f_biases,phi_weights,phi_biases)
+# Feeding Operation
 feed_op = model.feed()
+# Loss Operation
 loss_op = tf.losses.mean_squared_error(labels=y_train,predictions=feed_op[1])
+# Optimization Operation (Optimize only Variables in 'trainable' list)
 optimize_op = tf.train.AdamOptimizer(arg.lrt).minimize(loss_op,var_list=trainable)
 
+## --------------- Training ---------------- ##
+
 with tf.Session() as sess:
+	# Initialize
 	sess.run(tf.global_variables_initializer())
 	sess.run(tf.local_variables_initializer())
 
@@ -136,11 +144,13 @@ with tf.Session() as sess:
 		y_data = sess.run(y_train)
 		# 1. Compute g_result and f_result
 		g_result, f_result, z = sess.run(feed_op)
+		# print G result shape and F result shape
 		print('g_shape:{} f_shape:{} z_shape:{}'.format(g_result.shape,f_result.shape,z.shape),end=' || ')
+		# 2. Compute Loss
 		loss = sess.run(loss_op)
+		# 3. Optimize
 		sess.run(optimize_op)
 		print('loss:{}'.format(loss))
 	# stop coordinator and join threads
 	coord.request_stop()
 	coord.join(threads)
-
