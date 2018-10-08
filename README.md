@@ -20,6 +20,9 @@ Developed by James Youngchae Chee @ Dongsin Science Highschool.
 	    │   └── ...
 	    └── model (새로 만들어야됨 --> 모델들이 저장될 공간)
 
+### 1. Data
+리포지토리를 클론 한 후 ```./data``` 디렉토리를 만들어 원하는 영상 파일을 넣는다.
+### 2. Training
 #### Deterministic 모델 학습시키기
 ```
 Terminal> python3 train_een_deterministic.py [옵션 설정]
@@ -28,9 +31,6 @@ Terminal> python3 train_een_deterministic.py [옵션 설정]
 ```
 Terminal> python3 train_een_latent.py [옵션 설정]
 ```
-### 1. Data
-리포지토리를 클론 한 후 ```./data``` 디렉토리를 만들어 원하는 영상 파일을 넣는다.
-### 2. Training
 #### 반드시 설정할 옵션
 1. ``` -videopath ``` : 비디오가 저장된 디렉토리
 2. ``` -tfrecordspath ``` : tfrecords 파일의 디렉토리 (존재하지 않는다면 설정한 디렉토리로 자동 생성됨)
