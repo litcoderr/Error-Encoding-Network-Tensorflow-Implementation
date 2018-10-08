@@ -7,12 +7,24 @@ This is a tensorflow implementation of EEN developed by Mikael Henaff, Junbo Zha
 Developed by James Youngchae Chee @ Dongsin Science Highschool.
 ![Diagram](img/een-crop.png)
 ## Usage - 한국어(Korean)
+#### 파일 구조
+
+	Project Directory
+	    ├ models.py
+	    ├ dataloader.py
+	    ├ train_een_deterministic.py
+	    ├ train_een_latent.py
+	    ├── data (새로 만들어야됨 --> 학습시킬 영상들과 tfrecord가 저장될 공간)
+	    │   ├── flower.mp4 (학습 시킬 영상들 반드시 필요)
+	    │	├── dataset.tfrecords (없을 경우 학습코드를 실행시키면 생성됨)
+	    │   └── ...
+	    └── model (새로 만들어야됨 --> 모델들이 저장될 공간)
+
 #### Deterministic 모델 학습시키기
 ```
 Terminal> python3 train_een_deterministic.py [옵션 설정]
 ```
 #### Latent 적용된 모델 학습시키기
-<i>개발중</i>
 ```
 Terminal> python3 train_een_latent.py [옵션 설정]
 ```
@@ -31,11 +43,12 @@ Terminal> python3 train_een_latent.py [옵션 설정]
 2. ``` -height ``` : 학습할 때 사용할 프레임의 높이(픽셀단위) (기본값: 480)
 3. ``` -pred_frame ``` : 예측할(입력할) 프레임 수 (기본값: 5)
 4. ``` -time_interval ``` : 예측한(입력한) 프레임들 간 시간 간격(milisecond) (기본값: 2)
-5. ``` -frame_interval ``` : 영상에서 프레임을 추출해 학습데이터를 만들때 시작 프레임간 간격 (프레임단위) (기본값: 150)
+5. ``` -data_interval ``` : 영상에서 프레임을 추출해 학습데이터를 만들때 시작 프레임간 간격 (프레임단위) (기본값: 150)
 6. ``` -batch_size ``` : 학습시 배치 크기 (기본값: 5)
 7. ``` -nfeature ``` : Conv net 구조에서의 feature 수 (기본값: 64)
-8. ``` -lrt ``` : learning rate (기본값: 0.0005)
-9. ``` -epoch ``` : epoch 수 (기본값: 500)
+8. ``` -nlatent ``` : Latent 값의 갯수 (기본값: 4)
+9. ``` -lrt ``` : learning rate (기본값: 0.0005)
+10. ``` -epoch ``` : epoch 수 (기본값: 500)
 
 ### 3. Visualization
 <i>개발중</i>
