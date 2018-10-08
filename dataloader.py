@@ -118,20 +118,25 @@ class dataloader:
 		filename = self.arg.tfrecordspath
 		writer = tf.python_io.TFRecordWriter(filename)
 
-		
-		index = 0 # starting frame index
+		# index : starting frame index
+		index = 0
 		while self.endof_y(index) < self.nframe:
+			# Get data for X and Y
 			temp_x , temp_y = self.gen_Data(index)
 
+			# Get dimensions of X and Y data
 			height_x,width_x,channel_x = temp_x.shape
 			height_y,width_y,channel_y = temp_y.shape
 
+			# Cast to float32 (Optimal for Tensorflow)
 			temp_x = np.float32(temp_x)
 			temp_y = np.float32(temp_y)
 
+			# Convert numpy array to raw string
 			raw_x = temp_x.tostring()
 			raw_y = temp_y.tostring()
 
+			# Define a tensorflow train example
 			example = tf.train.Example(features=tf.train.Features(feature={
 				'height_x' : self._int64_feature(height_x),
 				'width_x' : self._int64_feature(width_x),
@@ -144,23 +149,26 @@ class dataloader:
 				}))
 			# Write example to tfrecords file
 			writer.write(example.SerializeToString())
-
+			# increase index to fetch next dataset
 			index = index + self.arg.data_interval
 		# close writer when done using
 		writer.close()
 
-	# make byte list to tf.train.Feature
+	# Returns byte list to tf.train.Feature
 	def _bytes_feature(self,value):
 		return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-	# make int64 list to tf.train.Feature
+	# Returns int64 list to tf.train.Feature
 	def _int64_feature(self,value):
 		return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 	# decode tfrecords data and return numpy array data
 	def decode(self,file_name_queue):
+		# Create TFRecord Reader
 		reader = tf.TFRecordReader()
-		_, example = reader.read(file_name_queue) # Read Examples from file_name_queue
+		# Read an Example from file_name_queue
+		_, example = reader.read(file_name_queue)
+		# Parse Example
 		features = tf.parse_single_example(example,features={
 			'height_x' : tf.FixedLenFeature([], tf.int64),
 			'width_x' : tf.FixedLenFeature([], tf.int64),
@@ -181,48 +189,58 @@ class dataloader:
 		width_y = tf.cast(features['width_y'],tf.int32)
 		channel_y = tf.cast(features['channel_y'],tf.int32)
 
-		# Remake image
+		## Remake image
+		# Define x and y data shape
 		x_shape = tf.stack([height_x,width_x,channel_x])
 		y_shape = tf.stack([height_y,width_y,channel_y])
+		# Reshape X and Y data to wanted shape
 		X = tf.reshape(X,x_shape)
 		Y = tf.reshape(Y,y_shape)
+		# Setting tensor's shape (Weird Tensorflow Stuff)
 		X.set_shape([self.arg.height,self.arg.width,self.channel])
 		Y.set_shape([self.arg.height,self.arg.width,self.channel])
 
-		# Generate shuffled batch data
+		# Generate shuffled batch data (with wanted batch_size)
 		X,Y = tf.train.shuffle_batch([X,Y],
 			batch_size = self.arg.batch_size,
 			capacity = 30,
 			num_threads=2,
 			min_after_dequeue=10)
-
+		# Return final X and Y data
+		# Shape: [batch_size,height,width,num_channel] (for each X and Y)
 		return X,Y
 
-	# Show frame
+	# Show frame based on frame_index
 	def showFrame(self,frame_index):
+		# Get Frame as Numpy array
 		ret,frame = self.getFrame(frame_index)
+		# If retrieved successfully
 		if ret == True:
+			# Show image using CV2 Library (CV2 Stuff)
 			cv2.imshow('showFrame',frame)
 			cv2.waitKey(0)
 			cv2.destroyWindow('showFrame')
 
-	# Play video
+	# Play video (Slow --> because of fetching and resizing process)
 	def playVideo(self):
-		# check if data is loaded
+		# Check if data is loaded
 		if self.cap.isOpened():
 			print('dataloader: playing video')
+			# For Every Frame
 			for i in range(self.nframe):
+				# Get each frame's numpy array (resized)
 				ret,frame = self.getFrame(i)
+				# If retrieved Successfully
 				if ret == True:
+					# Show frame using CV2 Library
 					cv2.imshow('playFrame',frame)
+					# If any key is pressed --> break
 					if cv2.waitKey(25) & 0xFF == ord('q'):
 						break
 				else:
 					break
+			# Destroy Window
 			cv2.destroyWindow('playFrame')
 		else:
 			print('dataloader: please load data first')
-
-	# Print Video Data
-	def printVideoData(self):
-		print('video data: {}'.format(self.getVideoData()))
+			
