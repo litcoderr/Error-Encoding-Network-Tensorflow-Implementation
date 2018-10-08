@@ -46,7 +46,7 @@ Terminal> python3 train_een_latent.py [옵션 설정]
 5. ``` -data_interval ``` : 영상에서 프레임을 추출해 학습데이터를 만들때 시작 프레임간 간격 (프레임단위) (기본값: 150)
 6. ``` -batch_size ``` : 학습시 배치 크기 (기본값: 5)
 7. ``` -nfeature ``` : Conv net 구조에서의 feature 수 (기본값: 64)
-8. ``` -nlatent ``` : Latent 값의 갯수 (기본값: 4)
+8. ``` -nlatent ``` : Latent 값의 갯수 (기본값: 4) ** train_een_latent.py에 만 존재**
 9. ``` -lrt ``` : learning rate (기본값: 0.0005)
 10. ``` -epoch ``` : epoch 수 (기본값: 500)
 
