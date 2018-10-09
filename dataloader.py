@@ -112,47 +112,48 @@ class dataloader:
 
 	# Generate TFRecord file for training
 	def gen_tfrecords(self):
-		print('dataloader: Generating TFRecords file-->{}'.format(self.arg.tfrecordspath))
+		with tf.name_scope('generate_tfrecords'):
+			print('dataloader: Generating TFRecords file-->{}'.format(self.arg.tfrecordspath))
 
-		# Create tfrecord writer with destination file name
-		filename = self.arg.tfrecordspath
-		writer = tf.python_io.TFRecordWriter(filename)
+			# Create tfrecord writer with destination file name
+			filename = self.arg.tfrecordspath
+			writer = tf.python_io.TFRecordWriter(filename)
 
-		# index : starting frame index
-		index = 0
-		while self.endof_y(index) < self.nframe:
-			# Get data for X and Y
-			temp_x , temp_y = self.gen_Data(index)
+			# index : starting frame index
+			index = 0
+			while self.endof_y(index) < self.nframe:
+				# Get data for X and Y
+				temp_x , temp_y = self.gen_Data(index)
 
-			# Get dimensions of X and Y data
-			height_x,width_x,channel_x = temp_x.shape
-			height_y,width_y,channel_y = temp_y.shape
+				# Get dimensions of X and Y data
+				height_x,width_x,channel_x = temp_x.shape
+				height_y,width_y,channel_y = temp_y.shape
 
-			# Cast to float32 (Optimal for Tensorflow)
-			temp_x = np.float32(temp_x)
-			temp_y = np.float32(temp_y)
+				# Cast to float32 (Optimal for Tensorflow)
+				temp_x = np.float32(temp_x)
+				temp_y = np.float32(temp_y)
 
-			# Convert numpy array to raw string
-			raw_x = temp_x.tostring()
-			raw_y = temp_y.tostring()
+				# Convert numpy array to raw string
+				raw_x = temp_x.tostring()
+				raw_y = temp_y.tostring()
 
-			# Define a tensorflow train example
-			example = tf.train.Example(features=tf.train.Features(feature={
-				'height_x' : self._int64_feature(height_x),
-				'width_x' : self._int64_feature(width_x),
-				'channel_x' : self._int64_feature(channel_x),
-				'raw_x' : self._bytes_feature(raw_x),
-				'height_y' : self._int64_feature(height_y),
-				'width_y' : self._int64_feature(width_y),
-				'channel_y' : self._int64_feature(channel_y),
-				'raw_y' : self._bytes_feature(raw_y)
-				}))
-			# Write example to tfrecords file
-			writer.write(example.SerializeToString())
-			# increase index to fetch next dataset
-			index = index + self.arg.data_interval
-		# close writer when done using
-		writer.close()
+				# Define a tensorflow train example
+				example = tf.train.Example(features=tf.train.Features(feature={
+					'height_x' : self._int64_feature(height_x),
+					'width_x' : self._int64_feature(width_x),
+					'channel_x' : self._int64_feature(channel_x),
+					'raw_x' : self._bytes_feature(raw_x),
+					'height_y' : self._int64_feature(height_y),
+					'width_y' : self._int64_feature(width_y),
+					'channel_y' : self._int64_feature(channel_y),
+					'raw_y' : self._bytes_feature(raw_y)
+					}))
+				# Write example to tfrecords file
+				writer.write(example.SerializeToString())
+				# increase index to fetch next dataset
+				index = index + self.arg.data_interval
+			# close writer when done using
+			writer.close()
 
 	# Returns byte list to tf.train.Feature
 	def _bytes_feature(self,value):
@@ -164,50 +165,51 @@ class dataloader:
 
 	# decode tfrecords data and return numpy array data
 	def decode(self,file_name_queue):
-		# Create TFRecord Reader
-		reader = tf.TFRecordReader()
-		# Read an Example from file_name_queue
-		_, example = reader.read(file_name_queue)
-		# Parse Example
-		features = tf.parse_single_example(example,features={
-			'height_x' : tf.FixedLenFeature([], tf.int64),
-			'width_x' : tf.FixedLenFeature([], tf.int64),
-			'channel_x' : tf.FixedLenFeature([], tf.int64),
-			'raw_x' : tf.FixedLenFeature([], tf.string),
-			'height_y' : tf.FixedLenFeature([], tf.int64),
-			'width_y' : tf.FixedLenFeature([], tf.int64),
-			'channel_y' : tf.FixedLenFeature([], tf.int64),
-			'raw_y' : tf.FixedLenFeature([], tf.string)
-			})
-		# Extract Feature
-		X = tf.decode_raw(features['raw_x'],tf.float32)
-		Y = tf.decode_raw(features['raw_y'],tf.float32)
-		height_x = tf.cast(features['height_x'],tf.int32)
-		width_x = tf.cast(features['width_x'],tf.int32)
-		channel_x = tf.cast(features['channel_x'],tf.int32)
-		height_y = tf.cast(features['height_y'],tf.int32)
-		width_y = tf.cast(features['width_y'],tf.int32)
-		channel_y = tf.cast(features['channel_y'],tf.int32)
+		with tf.name_scope('decode_tfrecords'):
+			# Create TFRecord Reader
+			reader = tf.TFRecordReader()
+			# Read an Example from file_name_queue
+			_, example = reader.read(file_name_queue)
+			# Parse Example
+			features = tf.parse_single_example(example,features={
+				'height_x' : tf.FixedLenFeature([], tf.int64),
+				'width_x' : tf.FixedLenFeature([], tf.int64),
+				'channel_x' : tf.FixedLenFeature([], tf.int64),
+				'raw_x' : tf.FixedLenFeature([], tf.string),
+				'height_y' : tf.FixedLenFeature([], tf.int64),
+				'width_y' : tf.FixedLenFeature([], tf.int64),
+				'channel_y' : tf.FixedLenFeature([], tf.int64),
+				'raw_y' : tf.FixedLenFeature([], tf.string)
+				})
+			# Extract Feature
+			X = tf.decode_raw(features['raw_x'],tf.float32)
+			Y = tf.decode_raw(features['raw_y'],tf.float32)
+			height_x = tf.cast(features['height_x'],tf.int32)
+			width_x = tf.cast(features['width_x'],tf.int32)
+			channel_x = tf.cast(features['channel_x'],tf.int32)
+			height_y = tf.cast(features['height_y'],tf.int32)
+			width_y = tf.cast(features['width_y'],tf.int32)
+			channel_y = tf.cast(features['channel_y'],tf.int32)
 
-		## Remake image
-		# Define x and y data shape
-		x_shape = tf.stack([height_x,width_x,channel_x])
-		y_shape = tf.stack([height_y,width_y,channel_y])
-		# Reshape X and Y data to wanted shape
-		X = tf.reshape(X,x_shape)
-		Y = tf.reshape(Y,y_shape)
-		# Setting tensor's shape (Weird Tensorflow Stuff)
-		X.set_shape([self.arg.height,self.arg.width,self.channel])
-		Y.set_shape([self.arg.height,self.arg.width,self.channel])
+			## Remake image
+			# Define x and y data shape
+			x_shape = tf.stack([height_x,width_x,channel_x])
+			y_shape = tf.stack([height_y,width_y,channel_y])
+			# Reshape X and Y data to wanted shape
+			X = tf.reshape(X,x_shape)
+			Y = tf.reshape(Y,y_shape)
+			# Setting tensor's shape (Weird Tensorflow Stuff)
+			X.set_shape([self.arg.height,self.arg.width,self.channel])
+			Y.set_shape([self.arg.height,self.arg.width,self.channel])
 
-		# Generate shuffled batch data (with wanted batch_size)
-		X,Y = tf.train.shuffle_batch([X,Y],
-			batch_size = self.arg.batch_size,
-			capacity = 30,
-			num_threads=2,
-			min_after_dequeue=10)
-		# Return final X and Y data
-		# Shape: [batch_size,height,width,num_channel] (for each X and Y)
+			# Generate shuffled batch data (with wanted batch_size)
+			X,Y = tf.train.shuffle_batch([X,Y],
+				batch_size = self.arg.batch_size,
+				capacity = 30,
+				num_threads=2,
+				min_after_dequeue=10)
+			# Return final X and Y data
+			# Shape: [batch_size,height,width,num_channel] (for each X and Y)
 		return X,Y
 
 	# Show frame based on frame_index
@@ -243,4 +245,3 @@ class dataloader:
 			cv2.destroyWindow('playFrame')
 		else:
 			print('dataloader: please load data first')
-			

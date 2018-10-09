@@ -31,8 +31,8 @@ parser.add_argument('-lrt', type=float, default=0.0005, help='learning rate')
 parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
 parser.add_argument('-tfrecordspath', type=str, default='./data/dataset.tfrecords', help='tfrecords file path')
+parser.add_argument('-tensorboard_path', type=str, default='./results/tensorboard/test1/deterministic', help='where tensorboard data is stored')
 parser.add_argument('-model_name', type=str, default='./model/deterministic/deterministic_model', help='deterministic model path')
-parser.add_argument('-save_dir', type=str, default='./results/', help='where models are saved')
 arg = parser.parse_args()
 
 ### Setup Training Environment ###
@@ -99,6 +99,9 @@ with tf.Session() as sess:
 	# Start Coordinator and thread to feed in data
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(coord=coord)
+
+	# Set up Tensorboard
+	writer = tf.summary.FileWriter(arg.tensorboard_path, sess.graph)
 
 	# Strat Training
 	for epochs in range(arg.epoch):

@@ -36,7 +36,7 @@ Terminal> python3 train_een_latent.py [옵션 설정]
 2. ``` -tfrecordspath ``` : tfrecords 파일의 디렉토리 (존재하지 않는다면 설정한 디렉토리로 자동 생성됨)
 3. ```-model_name``` (only deterministic 모델) : 학습한 모델을 저장할 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model')
 4. ```-model_path``` (only latent 모델) : deterministic 모델을 불러올 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model-19.meta')
-5. ``` -save_dir ``` : 학습한 모델을 저장할 디렉토리 (기본값: './results/')
+5. ``` -tensorboard_path ``` : 텐서보드 데이터가 저장되는 디렉토리 (기본값: './results/tensorboard/test1/latent')
 
 #### 이외의 옵션들
 1. ``` -width ``` : 학습할 때 사용할 프레임의 너비(픽셀단위) (기본값: 480)
@@ -82,7 +82,7 @@ Terminal> python3 train_een_latent.py [initialize options]
 2. ``` -tfrecordspath ``` : tfrecords file directory (auto created if not exist)
 3. ```-model_name``` (only deterministic model) : deterministic model path (default: './model/deterministic/deterministic_model')
 4. ```-model_path``` (only latent model) : latent model path (default: './model/deterministic/deterministic_model-19.meta')
-5. ``` -save_dir ``` : where models are saved (default: './results/')
+5. ``` -tensorboard_path ``` : where tensorboard data is stored (default: './results/tensorboard/test1/latent')
 
 #### More options to go through
 1. ``` -width ``` : wanted width for training(pixel) (default: 480)
