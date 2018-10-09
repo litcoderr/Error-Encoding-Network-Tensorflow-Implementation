@@ -34,13 +34,15 @@ class BaselineModel3Layer:
 	# Feeding Operation of Deterministic Model
 	def feed(self):
 		# 1. Encode with 3 Convolutional layer
-		self.X = self.conv2d(self.X,self.weights['wc1'],self.biases['bc1'],2)
-		self.X = self.conv2d(self.X,self.weights['wc2'],self.biases['bc2'],2)
-		self.X = self.conv2d(self.X,self.weights['wc3'],self.biases['bc3'],2)
+		with tf.name_scope('deterministic_encode'):
+			self.X = self.conv2d(self.X,self.weights['wc1'],self.biases['bc1'],2)
+			self.X = self.conv2d(self.X,self.weights['wc2'],self.biases['bc2'],2)
+			self.X = self.conv2d(self.X,self.weights['wc3'],self.biases['bc3'],2)
 		# 2. Decode with 3 Transpose Convolutional layer
-		self.X = self.conv2d_transpose(self.X,self.weights['wc4'],self.biases['bc4'],2)
-		self.X = self.conv2d_transpose(self.X,self.weights['wc5'],self.biases['bc5'],2)
-		self.X = self.conv2d_transpose(self.X,self.weights['wc6'],self.biases['bc6'],2)
+		with tf.name_scope('deterministic_decode'):
+			self.X = self.conv2d_transpose(self.X,self.weights['wc4'],self.biases['bc4'],2)
+			self.X = self.conv2d_transpose(self.X,self.weights['wc5'],self.biases['bc5'],2)
+			self.X = self.conv2d_transpose(self.X,self.weights['wc6'],self.biases['bc6'],2)
 		# 3. Return clipped output value for it to range between -1 and 1
 		# --> for generating valid image
 		return tf.clip_by_value(self.X,-1,1)
@@ -105,13 +107,15 @@ class LatentResidualModel3Layer:
 	# Define G Network (Same with Deterministic Model)
 	def g_network(self):
 		# 1. Encode with 3 Convolutional layer
-		result = self.conv2d(self.X,self.g_weights['wc1'],self.g_biases['bc1'],2)
-		result = self.conv2d(result,self.g_weights['wc2'],self.g_biases['bc2'],2)
-		result = self.conv2d(result,self.g_weights['wc3'],self.g_biases['bc3'],2)
+		with tf.name_scope('latent_g_encode'):
+			result = self.conv2d(self.X,self.g_weights['wc1'],self.g_biases['bc1'],2)
+			result = self.conv2d(result,self.g_weights['wc2'],self.g_biases['bc2'],2)
+			result = self.conv2d(result,self.g_weights['wc3'],self.g_biases['bc3'],2)
 		# 2. Decode with 3 Transpose Convolutional layer
-		result = self.conv2d_transpose(result,self.g_weights['wc4'],self.g_biases['bc4'],2)
-		result = self.conv2d_transpose(result,self.g_weights['wc5'],self.g_biases['bc5'],2)
-		result = self.conv2d_transpose(result,self.g_weights['wc6'],self.g_biases['bc6'],2)
+		with tf.name_scope('latent_g_decode'):
+			result = self.conv2d_transpose(result,self.g_weights['wc4'],self.g_biases['bc4'],2)
+			result = self.conv2d_transpose(result,self.g_weights['wc5'],self.g_biases['bc5'],2)
+			result = self.conv2d_transpose(result,self.g_weights['wc6'],self.g_biases['bc6'],2)
 		# 3. Return clipped output value for it to range between -1 and 1
 		# --> for generating valid image
 		return tf.clip_by_value(result,-1,1)
@@ -119,17 +123,20 @@ class LatentResidualModel3Layer:
 	# Define F Network (Encoded Latent Variable Implemented)
 	def f_network(self,z_emb):
 		# 1. Encode with 3 Convolutional layer
-		result = self.conv2d(self.X,self.f_weights['wc1'],self.f_biases['bc1'],2)
-		result = self.conv2d(result,self.f_weights['wc2'],self.f_biases['bc2'],2)
-		result = self.conv2d(result,self.f_weights['wc3'],self.f_biases['bc3'],2)
+		with tf.name_scope('latent_f_encode'):
+			result = self.conv2d(self.X,self.f_weights['wc1'],self.f_biases['bc1'],2)
+			result = self.conv2d(result,self.f_weights['wc2'],self.f_biases['bc2'],2)
+			result = self.conv2d(result,self.f_weights['wc3'],self.f_biases['bc3'],2)
 
 		# 2. Add Latent Variable (z_emb --> encoded latent variable)
-		result = result + z_emb
+		with tf.name_scope('latent_f_compute_z'):
+			result = result + z_emb
 
 		# 3. Decode with 3 Transpose Convolutional layer
-		result = self.conv2d_transpose(result,self.g_weights['wc4'],self.g_biases['bc4'],2)
-		result = self.conv2d_transpose(result,self.g_weights['wc5'],self.g_biases['bc5'],2)
-		result = self.conv2d_transpose(result,self.g_weights['wc6'],self.g_biases['bc6'],2)
+		with tf.name_scope('latent_f_decode'):
+			result = self.conv2d_transpose(result,self.g_weights['wc4'],self.g_biases['bc4'],2)
+			result = self.conv2d_transpose(result,self.g_weights['wc5'],self.g_biases['bc5'],2)
+			result = self.conv2d_transpose(result,self.g_weights['wc6'],self.g_biases['bc6'],2)
 		# 4. Return clipped output value for it to range between -1 and 1
 		# --> for generating valid image
 		return tf.clip_by_value(result,-1,1)
@@ -138,16 +145,18 @@ class LatentResidualModel3Layer:
 	def phi_network(self,residual_error):
 		# Get residual_error as input
 		# 1. Encode residual error with 4 conv layers
-		conv_result = self.conv2d(residual_error,self.phi_weights['wc1'],self.phi_biases['bc1'],2)
-		conv_result = self.conv2d(conv_result,self.phi_weights['wc2'],self.phi_biases['bc2'],2)
-		conv_result = self.conv2d(conv_result,self.phi_weights['wc3'],self.phi_biases['bc3'],2)
-		conv_result = self.conv2d(conv_result,self.phi_weights['wc4'],self.phi_biases['bc4'],2)
-		# 2. Reshape Conv Result to [n_batch, -1]
-		conv_result = tf.reshape(conv_result,[conv_result.shape[0].value,-1])
+		with tf.name_scope('latent_phi_conv'):
+			conv_result = self.conv2d(residual_error,self.phi_weights['wc1'],self.phi_biases['bc1'],2)
+			conv_result = self.conv2d(conv_result,self.phi_weights['wc2'],self.phi_biases['bc2'],2)
+			conv_result = self.conv2d(conv_result,self.phi_weights['wc3'],self.phi_biases['bc3'],2)
+			conv_result = self.conv2d(conv_result,self.phi_weights['wc4'],self.phi_biases['bc4'],2)
+			# 2. Reshape Conv Result to [n_batch, -1]
+			conv_result = tf.reshape(conv_result,[conv_result.shape[0].value,-1])
 		# 3. Compute Fully Connected Process of Phi Network
-		fc_result = tf.nn.relu(tf.matmul(conv_result,self.phi_weights['wf1'])+self.phi_biases['bf1'])
-		fc_result = tf.nn.relu(tf.matmul(fc_result,self.phi_weights['wf2'])+self.phi_biases['bf2'])
-		fc_result = tf.nn.relu(tf.matmul(fc_result,self.phi_weights['wf3'])+self.phi_biases['bf3'])
+		with tf.name_scope('latent_phi_fc'):
+			fc_result = tf.nn.relu(tf.matmul(conv_result,self.phi_weights['wf1'])+self.phi_biases['bf1'])
+			fc_result = tf.nn.relu(tf.matmul(fc_result,self.phi_weights['wf2'])+self.phi_biases['bf2'])
+			fc_result = tf.nn.relu(tf.matmul(fc_result,self.phi_weights['wf3'])+self.phi_biases['bf3'])
 		# 4. Return latent variable
 		return fc_result
 
@@ -155,20 +164,10 @@ class LatentResidualModel3Layer:
 	# Converts latet variable to the size of '-nfeature'
 	# --> For latent variable to be addable with encoded F network layer
 	def latent_encoder(self,latent):
-		# Matrix Multiplication
-		result = tf.matmul(latent,self.phi_weights['wf4'])
-		# Reshape to right size
-		result = tf.reshape(result,[result.shape[0].value,1,1,result.shape[1].value])
+		with tf.name_scope('latent_z_encoder'):
+			# Matrix Multiplication
+			result = tf.matmul(latent,self.phi_weights['wf4'])
+			# Reshape to right size
+			result = tf.reshape(result,[result.shape[0].value,1,1,result.shape[1].value])
 		# Return Result
 		return result
-
-
-
-
-
-
-
-
-
-
-
