@@ -130,6 +130,8 @@ tf.summary.histogram('phi_wf4',phi_weights['wf4'])
 file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
 # Decode tfrecord file to usable numpy array
 x_train , y_train = dataloader.decode(file_name_queue)
+x_val = tf.identity(x_train,'x_val')
+y_val = tf.identity(y_train,'y_val')
 # Create Latent Implemented Model
 model = models.LatentResidualModel3Layer(x_train,y_train,g_weights,f_weights,g_biases,f_biases,phi_weights,phi_biases)
 # Feeding Operation

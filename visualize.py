@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np 
 import argparse
 import os
-import skimage.io as io
 from matplotlib import pyplot as plt
 
 import dataloader
@@ -36,12 +35,6 @@ if not(os.path.isfile(arg.tfrecordspath)):
 else:
 	print('dataloader: {} exists'.format(arg.tfrecordspath))
 
-### Operations ###
-# Make tfrecord filename queue
-file_name_queue = tf.train.string_input_producer([arg.tfrecordspath])
-# Decode tfrecord file to usable numpy array
-x_train , y_train = dataloader.decode(file_name_queue)
-
 sess = tf.Session('', tf.Graph())
 with sess.graph.as_default():
     # Read meta graph and checkpoint to restore tf session
@@ -54,11 +47,39 @@ with sess.graph.as_default():
         threads.extend(qr.create_threads(sess, coord=coord, daemon=True,
                                          start=True))
 
-    g_result, f_result = sess.run(['deterministic_feed_op:0','latent_feed_op:0'])
-    g_image = g_result[3,:,:,6:9]
-    print(g_image.shape)
-    io.imshow(g_image)
-    plt.show()
+    while(True):
+	    x_val,y_val,g_result, f_result = sess.run(['x_val:0','y_val:0','deterministic_feed_op:0','latent_feed_op:0'])
+	    
+	    ## Make Subplot
+	    fig=plt.figure(figsize=(8, 8))
+	    rows = 4
+	    columns = 5
+	    index = 1
+	    # x_val
+	    for i in range(columns):
+	    	img = x_val[0,:,:,i*3:(i+1)*3]
+	    	fig.add_subplot(rows, columns, index)
+	    	plt.imshow(img)
+	    	index = index + 1
 
+	    for i in range(columns):
+	    	img = y_val[0,:,:,i*3:(i+1)*3]
+	    	fig.add_subplot(rows, columns, index)
+	    	plt.imshow(img)
+	    	index = index + 1
 
+	    for i in range(columns):
+	    	img = g_result[0,:,:,i*3:(i+1)*3]
+	    	fig.add_subplot(rows, columns, index)
+	    	plt.imshow(img)
+	    	index = index + 1
+
+	    for i in range(columns):
+	    	img = f_result[0,:,:,i*3:(i+1)*3]
+	    	fig.add_subplot(rows, columns, index)
+	    	plt.imshow(img)
+	    	index = index + 1
+
+	    ## Show Image
+	    plt.show()
 
