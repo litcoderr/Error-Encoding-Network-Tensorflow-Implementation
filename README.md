@@ -31,12 +31,23 @@ Terminal> python3 train_een_deterministic.py [옵션 설정]
 ```
 Terminal> python3 train_een_latent.py [옵션 설정]
 ```
+#### Tensorboard 이용한 학습과정 분석하기
+디렉토리는 학습시킬 때 설정한 -tensorboard_path로 설정하면 됨
+##### deterministic
+```
+Terminal> tensorboard --logdir=./results/tensorboard/test1/deterministic
+```
+##### latent
+```
+Terminal> tensorboard --logdir=./results/tensorboard/test1/latent 
+```
 #### 반드시 설정할 옵션
 1. ``` -videopath ``` : 비디오가 저장된 디렉토리
 2. ``` -tfrecordspath ``` : tfrecords 파일의 디렉토리 (존재하지 않는다면 설정한 디렉토리로 자동 생성됨)
 3. ```-model_name``` (only deterministic 모델) : 학습한 모델을 저장할 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model')
-4. ```-model_path``` (only latent 모델) : deterministic 모델을 불러올 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model-19.meta')
-5. ``` -tensorboard_path ``` : 텐서보드 데이터가 저장되는 디렉토리 (기본값: './results/tensorboard/test1/latent')
+4. ```-deterministic_model_path``` (only latent 모델) : deterministic 모델을 불러올 디렉토리 및 파일명 (기본값: './model/deterministic/deterministic_model-190.meta')
+5. ``` -model_save_path ``` : 모델이 저장되는 디렉토리 (기본값(deterministic model 경우): './model/deterministic/deterministic_model')
+6. ``` -tensorboard_path ``` : 텐서보드 데이터가 저장되는 디렉토리 (기본값: './results/tensorboard/test1/latent')
 
 #### 이외의 옵션들
 1. ``` -width ``` : 학습할 때 사용할 프레임의 너비(픽셀단위) (기본값: 480)
@@ -77,12 +88,23 @@ Terminal> python3 train_een_deterministic.py [initialize options]
 ```
 Terminal> python3 train_een_latent.py [initialize options]
 ```
+#### Using Tensorboard
+Set '--logdir' the same as '-tensorboard_path' which you set prior to training
+##### deterministic
+```
+Terminal> tensorboard --logdir=./results/tensorboard/test1/deterministic
+```
+##### latent
+```
+Terminal> tensorboard --logdir=./results/tensorboard/test1/latent 
+```
 #### Crucial Options to Check
 1. ``` -videopath ``` : directory of training video
 2. ``` -tfrecordspath ``` : tfrecords file directory (auto created if not exist)
 3. ```-model_name``` (only deterministic model) : deterministic model path (default: './model/deterministic/deterministic_model')
-4. ```-model_path``` (only latent model) : latent model path (default: './model/deterministic/deterministic_model-19.meta')
-5. ``` -tensorboard_path ``` : where tensorboard data is stored (default: './results/tensorboard/test1/latent')
+4. ```-deterministic_model_path``` (only latent model): latent model path (default: './model/deterministic/deterministic_model-190.meta')
+5. ``` -model_save_path ``` : where model is stored (default(deterministic model): './model/deterministic/deterministic_model')
+6. ``` -tensorboard_path ``` : where tensorboard data is stored (default: './results/tensorboard/test1/latent')
 
 #### More options to go through
 1. ``` -width ``` : wanted width for training(pixel) (default: 480)

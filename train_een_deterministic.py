@@ -32,7 +32,7 @@ parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
 parser.add_argument('-tfrecordspath', type=str, default='./data/dataset.tfrecords', help='tfrecords file path')
 parser.add_argument('-tensorboard_path', type=str, default='./results/tensorboard/test1/deterministic', help='where tensorboard data is stored')
-parser.add_argument('-model_name', type=str, default='./model/deterministic/deterministic_model', help='deterministic model path')
+parser.add_argument('-model_save_path', type=str, default='./model/deterministic/deterministic_model', help='deterministic model path')
 arg = parser.parse_args()
 
 ### Setup Training Environment ###
@@ -65,6 +65,10 @@ biases={
 	'bc5' : tf.get_variable("B5", shape=[arg.nfeature],initializer=tf.contrib.layers.xavier_initializer()),
 	'bc6' : tf.get_variable("B6", shape=[dataloader.channel],initializer=tf.contrib.layers.xavier_initializer())
 }
+# Store Weights and Biases as tf.summary
+for i in range(1,7):
+	tf.summary.histogram('wc{}'.format(i),weights['wc{}'.format(i)])
+	tf.summary.histogram('bc{}'.format(i),biases['bc{}'.format(i)])
 
 ## Operations ##
 
@@ -81,8 +85,11 @@ loss = tf.losses.mean_squared_error(
 	labels=y_train,
 	predictions=feed_op
 )
+tf.summary.scalar('loss',loss)
+
 # Train Operation
 train_op = tf.train.AdamOptimizer(arg.lrt).minimize(loss)
+
 # Initialization Operation
 init_global_op = tf.global_variables_initializer()
 init_local_op = tf.local_variables_initializer()
@@ -93,25 +100,32 @@ with tf.Session() as sess:
 	sess.run(init_global_op)
 	sess.run(init_local_op)
 
+	# Merge all summary
+	merged_summary = tf.summary.merge_all()
+
 	# Saver Object to save all the variables
 	saver = tf.train.Saver()
+	# Set up Tensorboard summary writer
+	summary_writer = tf.summary.FileWriter(arg.tensorboard_path)
+	summary_writer.add_graph(sess.graph)
 
 	# Start Coordinator and thread to feed in data
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(coord=coord)
 
-	# Set up Tensorboard
-	writer = tf.summary.FileWriter(arg.tensorboard_path, sess.graph)
-
 	# Strat Training
 	for epochs in range(arg.epoch):
 		# Run Training Operation
 		sess.run(train_op)
+		## Save summary data every epoch
+		temp_summary = sess.run(merged_summary)
+		summary_writer.add_summary(temp_summary,epochs)
 		# Print Loss Operation
 		print('epochs: {} loss: {}'.format(epochs,loss.eval()))
 		## Save weight every 10 epochs
 		if epochs % 10 == 0:
-			saver.save(sess,arg.model_name,global_step=epochs)
+			saver.save(sess,arg.model_save_path,global_step=epochs)
+
 
 	# stop coordinator and join threads
 	coord.request_stop()

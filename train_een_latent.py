@@ -33,7 +33,8 @@ parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
 parser.add_argument('-tfrecordspath', type=str, default='./data/dataset.tfrecords', help='tfrecords file path')
 parser.add_argument('-tensorboard_path', type=str, default='./results/tensorboard/test1/latent', help='where tensorboard data is stored')
-parser.add_argument('-model_path', type=str, default='./model/deterministic/deterministic_model-10.meta', help='deterministic model path')
+parser.add_argument('-deterministic_model_path', type=str, default='./model/deterministic/deterministic_model-190.meta', help='deterministic model path')
+parser.add_argument('-model_save_path', type=str, default='./model/latent/latent_model', help='latent model path')
 arg = parser.parse_args()
 
 ### Setup Training Environment ###
@@ -87,7 +88,7 @@ with tf.Session() as sess:
 	sess.run(tf.local_variables_initializer())
 
 	# Create saver --> import meta graph (pre-trained graph)
-	saver = tf.train.import_meta_graph(arg.model_path)
+	saver = tf.train.import_meta_graph(arg.deterministic_model_path)
 	# restore graph
 	saver.restore(sess,tf.train.latest_checkpoint('./model/deterministic/'))
 	graph = tf.get_default_graph()
@@ -111,6 +112,18 @@ trainable = trainable + list(f_biases.values())
 trainable = trainable + list(phi_weights.values())
 trainable = trainable + list(phi_biases.values())
 
+# Storing f and phi weights and biases as tf.summary
+for i in range(1,7):
+	tf.summary.histogram('f_wc{}'.format(i),f_weights['wc{}'.format(i)])
+	tf.summary.histogram('f_bc{}'.format(i),f_biases['bc{}'.format(i)])
+for i in range(1,5):
+	tf.summary.histogram('phi_wc{}'.format(i),phi_weights['wc{}'.format(i)])
+	tf.summary.histogram('phi_bc{}'.format(i),phi_biases['bc{}'.format(i)])
+for i in range(1,4):
+	tf.summary.histogram('phi_wf{}'.format(i),phi_weights['wf{}'.format(i)])
+	tf.summary.histogram('phi_bf{}'.format(i),phi_biases['bf{}'.format(i)])
+tf.summary.histogram('phi_wf4',phi_weights['wf4'])
+
 ## --------------- Operations ---------------- ##
 
 # Make tfrecord filename queue
@@ -123,6 +136,7 @@ model = models.LatentResidualModel3Layer(x_train,y_train,g_weights,f_weights,g_b
 feed_op = model.feed()
 # Loss Operation
 loss_op = tf.losses.mean_squared_error(labels=y_train,predictions=feed_op[1])
+tf.summary.scalar('loss',loss_op)
 # Optimization Operation (Optimize only Variables in 'trainable' list)
 optimize_op = tf.train.AdamOptimizer(arg.lrt).minimize(loss_op,var_list=trainable)
 
@@ -132,6 +146,16 @@ with tf.Session() as sess:
 	# Initialize
 	sess.run(tf.global_variables_initializer())
 	sess.run(tf.local_variables_initializer())
+
+	# Merge all summary
+	merged_summary = tf.summary.merge_all()
+
+	# Saver Object to save all the variables
+	saver = tf.train.Saver()
+	# Set up Tensorboard summary writer
+	summary_writer = tf.summary.FileWriter(arg.tensorboard_path)
+	summary_writer.add_graph(sess.graph)
+
 
 	# Start Coordinator to feed in data from batch shuffler
 	coord = tf.train.Coordinator()
@@ -147,7 +171,17 @@ with tf.Session() as sess:
 		loss = sess.run(loss_op)
 		# 3. Optimize
 		sess.run(optimize_op)
+
+		## Save summary data every epoch
+		temp_summary = sess.run(merged_summary)
+		summary_writer.add_summary(temp_summary,epochs)
+
+		# Print Loss in console
 		print('loss:{}'.format(loss))
+
+		if epochs % 10 == 0:
+			saver.save(sess,arg.model_save_path,global_step=epochs)
+
 	# stop coordinator and join threads
 	coord.request_stop()
 	coord.join(threads)
