@@ -80,13 +80,15 @@ x_train , y_train = dataloader.decode(file_name_queue)
 model = models.BaselineModel3Layer(x_train,weights,biases)
 # Feeding Operation
 feed_op = model.feed()
+## Feeding Operation to store
+feed_op_save = tf.identity(feed_op,'deterministic_feed_op')
+
 # Define MSE Loss
 loss = tf.losses.mean_squared_error(
 	labels=y_train,
 	predictions=feed_op
 )
 tf.summary.scalar('loss',loss)
-
 # Train Operation
 train_op = tf.train.AdamOptimizer(arg.lrt).minimize(loss)
 

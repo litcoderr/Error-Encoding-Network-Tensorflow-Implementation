@@ -33,7 +33,7 @@ parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
 parser.add_argument('-tfrecordspath', type=str, default='./data/dataset.tfrecords', help='tfrecords file path')
 parser.add_argument('-tensorboard_path', type=str, default='./results/tensorboard/test1/latent', help='where tensorboard data is stored')
-parser.add_argument('-deterministic_model_path', type=str, default='./model/deterministic/deterministic_model-190.meta', help='deterministic model path')
+parser.add_argument('-deterministic_model_path', type=str, default='./model/deterministic/deterministic_model-10.meta', help='deterministic model path')
 parser.add_argument('-model_save_path', type=str, default='./model/latent/latent_model', help='latent model path')
 arg = parser.parse_args()
 
@@ -134,6 +134,8 @@ x_train , y_train = dataloader.decode(file_name_queue)
 model = models.LatentResidualModel3Layer(x_train,y_train,g_weights,f_weights,g_biases,f_biases,phi_weights,phi_biases)
 # Feeding Operation
 feed_op = model.feed()
+g_feed_op_save = tf.identity(feed_op[0],'deterministic_feed_op')
+f_feed_op_save = tf.identity(feed_op[1],'latent_feed_op')
 # Loss Operation
 loss_op = tf.losses.mean_squared_error(labels=y_train,predictions=feed_op[1])
 tf.summary.scalar('loss',loss_op)
