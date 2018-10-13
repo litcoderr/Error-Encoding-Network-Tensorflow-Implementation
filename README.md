@@ -6,6 +6,11 @@ This is a tensorflow implementation of EEN developed by Mikael Henaff, Junbo Zha
 <br>
 Developed by James Youngchae Chee @ Dongsin Science Highschool.
 ![Diagram](img/een-crop.png)
+![Diagram](img/EEN_result.png)
+## Deterministic Model
+![Diagram](img/deterministic_model.png)
+## Latent Model
+![Diagram](img/EEN_model.png)
 ## Usage - 한국어(Korean)
 #### 파일 구조
 

@@ -33,7 +33,7 @@ parser.add_argument('-epoch', type=int, default=500, help='number of epochs')
 parser.add_argument('-videopath', type=str, default='./data/flower.mp4', help='video folder')
 parser.add_argument('-tfrecordspath', type=str, default='./data/dataset.tfrecords', help='tfrecords file path')
 parser.add_argument('-tensorboard_path', type=str, default='./results/tensorboard/test1/latent', help='where tensorboard data is stored')
-parser.add_argument('-deterministic_model_path', type=str, default='./model/deterministic/deterministic_model-10.meta', help='deterministic model path')
+parser.add_argument('-deterministic_model_path', type=str, default='./model/deterministic/deterministic_model-70.meta', help='deterministic model path')
 parser.add_argument('-model_save_path', type=str, default='./model/latent/latent_model', help='latent model path')
 arg = parser.parse_args()
 
