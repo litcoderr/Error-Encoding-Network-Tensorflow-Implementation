@@ -67,7 +67,9 @@ Terminal> tensorboard --logdir=./results/tensorboard/test1/latent
 10. ``` -epoch ``` : epoch 수 (기본값: 500)
 
 ### 3. Visualization
-<i>개발중</i>
+```
+Terminal> python3 visualizer.py [옵션 설정]
+```
 ## Usage - English
 #### Required Directory Structure
 
@@ -124,4 +126,6 @@ Terminal> tensorboard --logdir=./results/tensorboard/test1/latent
 10. ``` -epoch ``` : number of training epoch (default: 500)
 
 ### 3. Visualization
-<i>In Development</i>
+```
+Terminal> python3 visualizer.py [initialize options]
+```
